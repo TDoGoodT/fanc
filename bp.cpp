@@ -13,6 +13,9 @@ CodeBuffer &CodeBuffer::instance() {
 	return inst;
 }
 
+string CodeBuffer::genVar(){
+    return "t" + to_string(tempCounter++);
+}
 string CodeBuffer::genLabel(){
 	std::stringstream label;
 	label << "label_";
@@ -74,12 +77,14 @@ void CodeBuffer::printGlobalBuffer()
 // ******** Helper Methods ********** //
 bool replace(string& str, const string& from, const string& to, const BranchLabelIndex index) {
 	size_t pos;
-	if (index == SECOND) {
-		pos = str.find_last_of(from);
-	}
-	else { //FIRST
-		pos = str.find_first_of(from);
-	}
+    switch (index) {
+        case FIRST:
+            pos = str.find_first_of(from);
+            break;
+        case SECOND:
+            pos = str.find_last_of(from);
+            break;
+    }
     if (pos == string::npos)
         return false;
     str.replace(pos, from.length(), to);

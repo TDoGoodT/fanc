@@ -16,6 +16,7 @@ class CodeBuffer{
     void operator=(CodeBuffer const&);
 	std::vector<std::string> buffer;
 	std::vector<std::string> globalDefs;
+    int tempCounter = 0;
 public:
 	static CodeBuffer &instance();
 
@@ -58,6 +59,7 @@ public:
 	//print the content of the global buffer to stdout
 	void printGlobalBuffer();
 
+    string genVar();
 };
 
 #endif

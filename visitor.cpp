@@ -3,6 +3,7 @@
 //
 
 #include "visitor.hpp"
+
 Visitor &Visitor::instance() {
     static Visitor inst;//only instance
     return inst;
@@ -10,7 +11,7 @@ Visitor &Visitor::instance() {
 
 void Visitor::visit(const _T_Binop *element) {
     string op_str;
-    switch(element->binopCase) {
+    switch (element->binopCase) {
         case _T_Binop::_PLUS_:
             op_str = "add";
             break;
@@ -29,99 +30,128 @@ void Visitor::visit(const _T_Binop *element) {
     // TODO: handle overflow
     codeBuffer.emit(element->place + ":=" + element->r_exp->place + op_str + element->l_exp->place);
 }
+
 void Visitor::visit(const _T_Exp *element) {
 
 }
+
 void Visitor::visit(const _T_Number *element) {
 
 }
+
 void Visitor::visit(const _T_Declaration *element) {
 
 }
+
 void Visitor::visit(const _T_Assignment *element) {
 
 }
-void Visitor::visit(const _T_LateAssignment *element){
+
+void Visitor::visit(const _T_LateAssignment *element) {
 
 };
+
 void Visitor::visit(const _T_FunctionCall *element) {
 
 }
+
 void Visitor::visit(const _T_Return *element) {
 
 }
+
 void Visitor::visit(const _T_If_pattern *element) {
 
 }
+
 void Visitor::visit(const _T_While *element) {
 
 }
+
 void Visitor::visit(const _T_Statements *element) {
 
 }
+
 void Visitor::visit(const _T_Statement *element) {
 
 }
+
 void Visitor::visit(const _T_Not *element) {
 
 }
+
 void Visitor::visit(const _T_Assign *element) {
 
 }
+
 void Visitor::visit(const _T_If *element) {
 
 }
+
 void Visitor::visit(const _T_Else *element) {
 
 }
+
 void Visitor::visit(const _T_Id *element) {
 
 }
+
 void Visitor::visit(const _T_String *element) {
 
 }
+
 void Visitor::visit(const _T_Cast *element) {
 
 }
+
 void Visitor::visit(const _T_Void *element) {
 
 }
+
 void Visitor::visit(const _T_Bool *element) {
 
 }
+
 void Visitor::visit(const _T_RetType *element) {
 
 }
+
 void Visitor::visit(const _T_Program *element) {
 
 }
+
 void Visitor::visit(const _T_Funcs *element) {
 
 }
+
 void Visitor::visit(const _T_FuncDecl *element) {
 
 }
+
 void Visitor::visit(const _T_Formals *element) {
 
 }
+
 void Visitor::visit(const _T_FormalsList *element) {
 
 }
+
 void Visitor::visit(const _T_FormalDecl *element) {
 
 }
+
 void Visitor::visit(const _T_ExpList *element) {
 
 }
-void Visitor::visit(const _T_Type *element) {
 
-}
+
 void Visitor::visit(const _T_Trinari *element) {
 
 }
+
 void Visitor::visit(const _T_Call *element) {
 
 }
+
 void Visitor::visit(const _T_CallExp *element) {
 
 }

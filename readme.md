@@ -1,2 +1,11 @@
-1. suppresed warnings in the build of the parser by removing binopp
-2. Fixed edge cases that caused NULL PTR exceptions
+# TODOs
+- [x] create genVar.
+- [ ] calculations for arithmetics expressions.
+  - [ ] simple expressions.
+  - [ ] complex expressions.
+- [ ] calculations for boolean expressions.
+- [ ] saving and loading variables in the stack.
+- [ ] sequence of statements.
+- [ ] control flows management.
+- [ ] io functions management.
+- [ ] functions management.

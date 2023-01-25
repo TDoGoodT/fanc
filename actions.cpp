@@ -25,7 +25,7 @@ void actions::start_program(Store* store){
 }
 void actions::end_program(Store* store){
     //cout << "finishing program" << endl;
-    EntrySymbolTable* main_func = store->symbol_table_manager->get_entry_by_name("main");
+    SymbolTableEntry* main_func = store->symbol_table_manager->get_entry_by_name("main");
     if(main_func == nullptr ||  !main_func->which || main_func->node.func_node->id->type->to_string() != "VOID" || !main_func->node.func_node->formals->formal_list->formal_list.empty()){
         //error
         errorMainMissing();
@@ -45,14 +45,14 @@ void actions::end_scope(Store *store) {
     int offset;
     SymbolTable* symbol_table = store->symbol_table_manager->get_current_symbol_table();
     endScope();
-    for (EntrySymbolTable* entry : symbol_table->get_all_ids()){
+    for (SymbolTableEntry* entry : symbol_table->get_all_ids()){
         name = entry->get_name();
         str = entry->get_type();
         offset = entry->get_offset();
     	//print id entry
     	printID(name,offset,str);
     }
-    for (EntrySymbolTable* entry : symbol_table->get_all_funcs()){
+    for (SymbolTableEntry* entry : symbol_table->get_all_funcs()){
         cout << entry->get_id() << " " << entry->get_name() << " " << entry->get_offset() << endl;
     	//print function entry
     }

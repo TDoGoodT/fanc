@@ -126,6 +126,7 @@ epsilon
 
 funcDecl:
 retType fid LPAREN formals RPAREN LBRACE statements RBRACE
+
 {
     $2->type = $1->type;
     auto func = new _T_FuncDecl($2, $4, $7);

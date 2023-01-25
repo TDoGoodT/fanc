@@ -9,7 +9,7 @@ using namespace actions;
 bool validations::is_call_correct(Store *store, struct _T_Call *call, int lineno) {
     std::vector<_T_FormalDecl*> func_formals;
     if(!(store->in_func && store->crr_func_id->id == call->callExp->function->id)){
-        EntrySymbolTable* func_entry = store->symbol_table_manager->get_entry_by_name(call->callExp->function->id);
+        SymbolTableEntry* func_entry = store->symbol_table_manager->get_entry_by_name(call->callExp->function->id);
         if(func_entry == nullptr || func_entry->which != 1) {
             errorUndefFunc(lineno, call->callExp->function->id);
             return false;
@@ -60,7 +60,7 @@ bool validations::is_id_declared(Store *store, struct _T_Id *id){
 }
 bool validations::is_func_declared(Store *store, struct _T_Id *func_id) {
     if (!(store->in_func && store->crr_func_id != nullptr && store->crr_func_id->id == func_id->id)) {
-        EntrySymbolTable *func_entry = store->symbol_table_manager->get_entry_by_name(func_id->id);
+        SymbolTableEntry *func_entry = store->symbol_table_manager->get_entry_by_name(func_id->id);
         if (func_entry == nullptr || func_entry->which != 1) {
             return false;
         }

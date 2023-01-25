@@ -11,18 +11,18 @@ using namespace output;
 
 
 
-vector<EntrySymbolTable*> SymbolTable::get_all_ids() {
-        vector<EntrySymbolTable*> ids;
-        for (EntrySymbolTable* entry : entries_vector) {
+vector<SymbolTableEntry*> SymbolTable::get_all_ids() {
+        vector<SymbolTableEntry*> ids;
+        for (SymbolTableEntry* entry : entries_vector) {
             if (entry->which == 0) {
                 ids.push_back(entry);
             }
         }
         return ids;
     }
-vector<EntrySymbolTable*> SymbolTable::get_all_funcs() {
-    vector<EntrySymbolTable*> funcs;
-    for (EntrySymbolTable* entry : entries_vector) {
+vector<SymbolTableEntry*> SymbolTable::get_all_funcs() {
+    vector<SymbolTableEntry*> funcs;
+    for (SymbolTableEntry* entry : entries_vector) {
         if (entry->which == 1) {
             funcs.push_back(entry);
         }

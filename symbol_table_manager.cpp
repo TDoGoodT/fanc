@@ -18,8 +18,8 @@ void SymbolTableManager::insert_function_params(struct _T_FormalsList* formalsLi
     int offset = offsets_stack.back();
     assert(offset == 0);
     for(auto param : formalsList->formal_list){
-        auto* entry = new EntrySymbolTable(param->id,--offset);
-        vector<EntrySymbolTable *> * const entries_vector = &symbol_table_stack.back()->entries_vector;
+        auto* entry = new SymbolTableEntry(param->id,--offset);
+        vector<SymbolTableEntry *> * const entries_vector = &symbol_table_stack.back()->entries_vector;
         entries_vector->push_back(entry);
     }
 }
@@ -41,11 +41,11 @@ SymbolTable* SymbolTableManager::get_current_symbol_table(){
     return symbol_table_stack.back();
 }
 
-EntrySymbolTable* SymbolTableManager::get_entry_by_name(const string& name){
+SymbolTableEntry* SymbolTableManager::get_entry_by_name(const string& name){
     size_t len = symbol_table_stack.size();
     for(int i=(int)len-1;i>=0;i--){
         SymbolTable* symbol_table = symbol_table_stack[i];
-        for (EntrySymbolTable* entry : symbol_table->entries_vector){
+        for (SymbolTableEntry* entry : symbol_table->entries_vector){
             if(entry->get_id()==name){
                 return entry;
             }
@@ -54,15 +54,15 @@ EntrySymbolTable* SymbolTableManager::get_entry_by_name(const string& name){
     return nullptr;
 }
 
-void SymbolTableManager::insert_id(struct _T_Id* id){
+void SymbolTableManager::insert_id(_T_Id* id){
     int offset=offsets_stack.back();
-    auto* entry=new EntrySymbolTable(id, offset);
+    auto* entry=new SymbolTableEntry(id, offset);
     symbol_table_stack.back()->entries_vector.push_back(entry);
     offsets_stack.back()+=1;
 }
 
 void SymbolTableManager::insert_function(struct _T_FuncDecl* func) {
-    auto entry = new EntrySymbolTable(func, 0);
+    auto entry = new SymbolTableEntry(func, 0);
     symbol_table_stack.back()->entries_vector.push_back(entry);
 }
 

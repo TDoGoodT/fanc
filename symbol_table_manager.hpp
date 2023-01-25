@@ -21,7 +21,7 @@ struct SymbolTableManager {
     void end_scope();
     void begin_scope();
     SymbolTable* get_current_symbol_table();
-    EntrySymbolTable* get_entry_by_name(const string& name);
+    SymbolTableEntry* get_entry_by_name(const string& name);
 
     void insert_function(struct _T_FuncDecl* func);
 };

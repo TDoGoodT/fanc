@@ -12,7 +12,7 @@
 using namespace std;
 using namespace output;
 
-struct EntrySymbolTable{
+struct SymbolTableEntry{
 private:
     int offset;
 public:
@@ -24,8 +24,8 @@ public:
         explicit _node(struct _T_FuncDecl *func_node) : func_node(func_node) {}
     } node;
     
-    EntrySymbolTable(struct _T_Id *id_node, int offset) : which(0), offset(offset), node(id_node) {}
-    EntrySymbolTable(struct _T_FuncDecl *func_node, int offset) : which(1), offset(offset), node(func_node) {}
+    SymbolTableEntry(struct _T_Id *id_node, int offset) : which(0), offset(offset), node(id_node) {}
+    SymbolTableEntry(struct _T_FuncDecl *func_node, int offset) : which(1), offset(offset), node(func_node) {}
     string get_id() const {
         if(which == 0) return node.id_node->id;
         else return node.func_node->id->id;
@@ -43,12 +43,12 @@ public:
     }
 };
 struct SymbolTable{
-    vector<EntrySymbolTable*> entries_vector;
+    vector<SymbolTableEntry*> entries_vector;
     explicit SymbolTable() {
-        entries_vector = vector<EntrySymbolTable*>();
+        entries_vector = vector<SymbolTableEntry*>();
     }
-    vector<EntrySymbolTable*> get_all_ids();
-    vector<EntrySymbolTable*> get_all_funcs();
+    vector<SymbolTableEntry*> get_all_ids();
+    vector<SymbolTableEntry*> get_all_funcs();
 
 };
 

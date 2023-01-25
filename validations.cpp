@@ -10,7 +10,7 @@ using namespace actions;
 bool validations::is_call_correct(Store *store, struct _T_Call *call, int lineno) {
     std::vector<_T_FormalDecl *> func_formals;
     if (!(store->in_func && store->crr_func_id->id == call->callExp->function->id)) {
-        SymbolTableEntry *func_entry = store->symbol_table_manager->get_entry_by_name(call->callExp->function->id);
+        SymbolTableEntry *func_entry = store->symbol_table_manager.get_entry_by_name(call->callExp->function->id);
         if (func_entry == nullptr || func_entry->which != 1) {
             errorUndefFunc(lineno, call->callExp->function->id);
             return false;
@@ -46,7 +46,15 @@ bool validations::is_call_correct(Store *store, struct _T_Call *call, int lineno
     }
     return true;
 }
-
+void validations::validate_main(Store *store) {
+    SymbolTableEntry *main_func = store->symbol_table_manager.get_entry_by_name("main");
+    if (main_func == nullptr || !main_func->which || main_func->node.func_node->id->type->to_string() != "VOID" ||
+        !main_func->node.func_node->formals->formal_list->formal_list.empty()) {
+        //error
+        errorMainMissing();
+        exit(1);
+    }
+}
 bool validations::is_formal_declared(vector<struct _T_FormalDecl *> &formal, struct _T_Id *id) {
     return any_of(formal.begin(), formal.end(), [id](struct _T_FormalDecl *formal) {
         return formal->id->id == id->id;
@@ -54,7 +62,7 @@ bool validations::is_formal_declared(vector<struct _T_FormalDecl *> &formal, str
 }
 
 bool validations::is_id_declared(Store *store, struct _T_Id *id) {
-    auto entry = store->symbol_table_manager->get_entry_by_name(id->id);
+    auto entry = store->symbol_table_manager.get_entry_by_name(id->id);
     if (entry == nullptr) {
         return false;
     }
@@ -64,7 +72,7 @@ bool validations::is_id_declared(Store *store, struct _T_Id *id) {
 
 bool validations::is_func_declared(Store *store, struct _T_Id *func_id) {
     if (!(store->in_func && store->crr_func_id != nullptr && store->crr_func_id->id == func_id->id)) {
-        SymbolTableEntry *func_entry = store->symbol_table_manager->get_entry_by_name(func_id->id);
+        SymbolTableEntry *func_entry = store->symbol_table_manager.get_entry_by_name(func_id->id);
         if (func_entry == nullptr || func_entry->which != 1) {
             return false;
         }

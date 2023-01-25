@@ -43,7 +43,7 @@ SymbolTable *SymbolTableManager::get_current_symbol_table() {
     return symbol_table_stack.back();
 }
 
-SymbolTableEntry *SymbolTableManager::get_entry_by_name(const string &name) {
+SymbolTableEntry * SymbolTableManager::get_entry_by_name(const string &name) const {
     size_t len = symbol_table_stack.size();
     for (int i = (int) len - 1; i >= 0; i--) {
         SymbolTable *symbol_table = symbol_table_stack[i];
@@ -66,6 +66,20 @@ void SymbolTableManager::insert_id(_T_Id *id) {
 void SymbolTableManager::insert_function(struct _T_FuncDecl *func) {
     auto entry = new SymbolTableEntry(func, 0);
     symbol_table_stack.back()->entries_vector.push_back(entry);
+}
+static struct _T_FuncDecl *createFuncDecl(string name, _T_Type::Type type) {
+    auto func_id = new _T_Id(std::move(name), new _T_Type(_T_Type::_VOID_));
+    auto inputs_decl = vector<_T_FormalDecl *>();
+    auto input_id = new _T_Id("input", new _T_Type(type));
+    auto input_decl = new _T_FormalDecl(input_id);
+    auto func_formals_list = new _T_FormalsList(input_decl);
+    auto func_formals = new _T_Formals(func_formals_list);
+    return new _T_FuncDecl(func_id, func_formals);
+}
+
+void SymbolTableManager::add_print_functions() {
+    insert_function(createFuncDecl("print", _T_Type::_STRING_));
+    insert_function(createFuncDecl("printi", _T_Type::_INT_));
 }
 
 

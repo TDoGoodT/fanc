@@ -8,15 +8,14 @@
 #include "symbol_table_manager.hpp"
 
 struct Store {
-    SymbolTableManager *symbol_table_manager;
+    SymbolTableManager symbol_table_manager = SymbolTableManager();
     int in_while = 0;
     bool in_func;
     _T_Id *crr_func_id{};
     _T_FormalsList *crr_func_params{};
     _T_Type::Type func_ret_type;
-
-    explicit Store(SymbolTableManager *symbol_table_manager) : symbol_table_manager(symbol_table_manager), in_while(0),
-                                                               in_func(false), func_ret_type() {}
+    static Store &instance();
+    explicit Store() : in_while(0), in_func(false), func_ret_type() {}
 
     void begin_function(_T_Type::Type type);
 

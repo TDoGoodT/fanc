@@ -13,7 +13,7 @@ void Store::begin_function(_T_Type::Type type) {
 void Store::end_function(struct _T_FuncDecl *func) {
     in_func = false;
     crr_func_id = nullptr;
-    symbol_table_manager->insert_function(func);
+    symbol_table_manager.insert_function(func);
 }
 
 void Store::begin_while() {
@@ -35,12 +35,12 @@ void Store::end_while() {
 
 void Store::insert_function_params(struct _T_FormalsList *formals) {
     crr_func_params = formals;
-    symbol_table_manager->insert_function_params(formals);
+    symbol_table_manager.insert_function_params(formals);
 }
 
 
 _T_Id *Store::get_id(const string &id) const {
-    auto *entry = symbol_table_manager->get_entry_by_name(id);
+    auto *entry = symbol_table_manager.get_entry_by_name(id);
     if (entry == nullptr) {
         return nullptr;
     }
@@ -61,7 +61,7 @@ _T_Id *Store::get_func(const string &id) const {
     if (crr_func_id->id == id) {
         return crr_func_id;
     }
-    auto *entry = symbol_table_manager->get_entry_by_name(id);
+    auto *entry = symbol_table_manager.get_entry_by_name(id);
     if (entry == nullptr) {
         return nullptr;
     }
@@ -78,6 +78,11 @@ _T_Id *Store::get_func(_T_Id *pId) const {
 void Store::declare_func(_T_Id *func_id) {
     assert(in_func);
     crr_func_id = func_id;
+}
+
+Store &Store::instance() {
+    static Store inst;//only instance
+    return inst;
 }
 
 

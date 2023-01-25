@@ -23,5 +23,9 @@ namespace validations {
     bool is_byte_to_large(struct _T_Byte *byte);
 
     bool is_formal_declared(vector<struct _T_FormalDecl *> &formal, _T_Id *id);
+
+    void validate_main(Store *pStore);
+
+
 };
 #endif //ANALYZER_VALIDATIONS_HPP

@@ -30,9 +30,11 @@ struct SymbolTableManager {
 
     SymbolTable *get_current_symbol_table();
 
-    SymbolTableEntry *get_entry_by_name(const string &name);
+    SymbolTableEntry * get_entry_by_name(const string &name) const;
 
     void insert_function(struct _T_FuncDecl *func);
+
+    void add_print_functions();
 };
 
 #endif //ANALYZER_SYMBOL_TABLE_MANAGER_HPP

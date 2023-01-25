@@ -1,8 +1,8 @@
 # TODOs
 - [x] create newTemp.
-- [ ] calculations for arithmetics expressions.
-  - [ ] simple expressions.
-  - [ ] complex expressions.
+- [x] calculations for arithmetics expressions.
+  - [x] simple expressions.
+  - [x] complex expressions.
 - [ ] calculations for boolean expressions.
 - [ ] saving and loading variables in the stack.
 - [ ] sequence of statements.

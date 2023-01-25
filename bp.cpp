@@ -15,7 +15,7 @@ CodeBuffer &CodeBuffer::instance() {
 }
 
 string CodeBuffer::newTemp() {
-    return "t" + to_string(tempCounter++);
+    return "%t" + to_string(tempCounter++);
 }
 
 string CodeBuffer::genLabel() {
@@ -28,8 +28,10 @@ string CodeBuffer::genLabel() {
     return ret;
 }
 
-int CodeBuffer::emit(const string &s) {
-    buffer.push_back(s);
+int CodeBuffer::emit(const string &s, bool isGlobal) {
+    string new_s = isGlobal ? s : "\t" + s;
+    cout << new_s << endl;
+    buffer.push_back(new_s);
     return buffer.size() - 1;
 }
 
@@ -69,6 +71,10 @@ void CodeBuffer::printGlobalBuffer() {
     for (vector<string>::const_iterator it = globalDefs.begin(); it != globalDefs.end(); ++it) {
         cout << *it << endl;
     }
+}
+
+void CodeBuffer::emitLabel(const char *string) {
+    emit(string, true);
 }
 
 // ******** Helper Methods ********** //

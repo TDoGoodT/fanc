@@ -7,76 +7,82 @@
 
 
 #include "types.hpp"
+#include "markers.hpp"
 #include "bp.hpp"
 
 class Visitor {
-    CodeBuffer& codeBuffer = CodeBuffer::instance();
 public:
     static Visitor& instance();
 
-    void visit(const _T_Exp *element);
+    static void visit(const struct _T_Exp *element);
 
-    void visit(const _T_Number *element);
+    static void visit(const struct _T_Number *element);
 
-    void visit(const _T_Declaration *element);
+    static void visit(const struct _T_Declaration *element);
 
-    void visit(const _T_Assignment *element);
+    static void visit(const struct _T_Assignment *element);
 
-    void visit(const _T_LateAssignment *element);
+    static void visit(const struct _T_LateAssignment *element);
 
-    void visit(const _T_FunctionCall *element);
+    static void visit(const struct _T_FunctionCall *element);
 
-    void visit(const _T_Return *element);
+    static void visit(const struct _T_Return *element);
 
-    void visit(const _T_If_pattern *element);
+    static void visit(const struct _T_If_pattern *element);
 
-    void visit(const _T_While *element);
+    static void visit(const struct _T_While *element);
 
-    void visit(const _T_Statements *element);
+    static void visit(const struct _T_Statements *element);
 
-    void visit(const _T_Statement *element);
+    static void visit(const struct _T_Statement *element);
 
-    void visit(const _T_Not *element);
+    static void visit(const struct _T_Not *element);
 
-    void visit(const _T_Assign *element);
+    static void visit(const struct _T_If *element);
 
-    void visit(const _T_If *element);
+    static void visit(const struct _T_Else *element);
 
-    void visit(const _T_Else *element);
+    static void visit(const struct _T_Id *element);
 
-    void visit(const _T_Id *element);
+    static void visit(const struct _T_String *element);
 
-    void visit(const _T_String *element);
+    static void visit(const struct _T_Cast *element);
 
-    void visit(const _T_Cast *element);
+    static void visit(const struct _T_Void *element);
 
-    void visit(const _T_Void *element);
+    static void visit(const struct _T_Bool *element);
 
-    void visit(const _T_Bool *element);
+    static void visit(const struct _T_RetType *element);
 
-    void visit(const _T_RetType *element);
+    static void visit(const struct _T_Program *element);
 
-    void visit(const _T_Program *element);
+    static void visit(const struct _T_Funcs *element);
 
-    void visit(const _T_Funcs *element);
+    static void visit(const struct _T_FuncDecl *element);
 
-    void visit(const _T_FuncDecl *element);
+    static void visit(const struct _T_Formals *element);
 
-    void visit(const _T_Formals *element);
+    static void visit(const struct _T_FormalsList *element);
 
-    void visit(const _T_FormalsList *element);
+    static void visit(const struct _T_FormalDecl *element);
 
-    void visit(const _T_FormalDecl *element);
+    static void visit(const struct _T_ExpList *element);
 
-    void visit(const _T_ExpList *element);
+    static void visit(const struct _T_Binop *element);
 
-    void visit(const _T_Binop *element);
+    static void visit(const struct _T_Trinari *element);
 
-    void visit(const _T_Trinari *element);
+    static void visit(const struct _T_Call *element);
 
-    void visit(const _T_Call *element);
+    static void visit(const struct _T_CallExp *element);
 
-    void visit(const _T_CallExp *element);
+    static void visit(const struct InitMarker *element);
+
+    static void emitDivByZeroHandler(const string &r_str);
+
+    static void emitBinop(const _T_Binop *element, const string &op_str, const string &r_str, const string &l_str);
+
+    static void emitMaskTargetByte(const string& place);
 };
 
 

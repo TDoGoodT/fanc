@@ -13,8 +13,7 @@
     bool in_if;
     bool in_else;
     bool in_while;
-    SymbolTableManager symbol_table_manager;
-    Store store(&symbol_table_manager);
+    Store store = Store::instance();
 %}
 %union {
 struct _T_Exp*              T_Exp;
@@ -29,7 +28,6 @@ struct _T_While*            T_While;
 struct _T_Statements*       T_Statements;
 struct _T_Statement*        T_Statement;
 struct _T_Not*              T_Not;
-struct _T_Assign*           T_Assign;
 struct _T_If*               T_If;
 struct _T_Else*             T_Else;
 struct _T_Id*               T_Id;
@@ -110,10 +108,10 @@ struct _T_CallExp*          T_CallExp;
 %type <T_CallExp> call
 %%
 program:
-funcs
-{ $$ = new _T_Program($1); }
+initMarker funcs
+{ $$ = new _T_Program($2);  }
+initMarker: { InitMarker(); }
 ;
-
 funcs:
 epsilon
 { $$ = new _T_Funcs(); }
@@ -221,6 +219,7 @@ lbrace statements rbrace
     insert_id(&store, $2);
     auto decl = new _T_Declaration($1, $2);
     $$ = decl;
+
 }
 | type id ASSIGN exp SC
 {
@@ -239,6 +238,7 @@ lbrace statements rbrace
     insert_id(&store, $2);
     auto ass = new _T_Assignment($1, $2, $4);
     $$ = ass;
+
 }
 | id ASSIGN exp SC
 {
@@ -258,6 +258,7 @@ lbrace statements rbrace
     $1->value = $3->value;
     auto lateAss = new _T_LateAssignment($1, $3);
     $$ = lateAss;
+
 }
 | call SC
 {
@@ -395,7 +396,7 @@ LPAREN exp RPAREN
     $$ = tri;
 }
 | binop
-{ $$ = $1; }
+{ $$ = $1;  }
 | id
 {
     if(!is_id_declared(&store, $1)) {
@@ -437,6 +438,7 @@ LPAREN exp RPAREN
         exit(1);
     }
     $$ = nott;
+
 }
 | exp AND exp
 {
@@ -582,7 +584,7 @@ LBRACE
 
 epsilon:
 ;
-%% 
+%%
 int main() {
     start_program(&store);
     yyparse();

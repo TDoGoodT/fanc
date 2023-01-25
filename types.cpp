@@ -58,8 +58,6 @@ static _T_Type::Type get_type(_T_Exp *pExp, _T_Exp *pExp1) {
     exit(1);
 }
 
-_T_Binop::_T_Binop(struct _T_Exp *l_exp, struct _T_Exp *r_exp)  :  r_exp(r_exp), l_exp(l_exp), _T_Exp(new _T_Type(get_type(r_exp, l_exp))) {}
-
 bool _T_Binop::is_legal(int line) const {
     if(!is_numeric(r_exp->type->typeCase) || !is_numeric(r_exp->type->typeCase)) {
         errorMismatch(line);

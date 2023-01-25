@@ -1,5 +1,5 @@
 # TODOs
-- [x] create genVar.
+- [x] create newTemp.
 - [ ] calculations for arithmetics expressions.
   - [ ] simple expressions.
   - [ ] complex expressions.

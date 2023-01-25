@@ -59,7 +59,7 @@ public:
 	//print the content of the global buffer to stdout
 	void printGlobalBuffer();
 
-    string genVar();
+    string newTemp();
 };
 
 #endif

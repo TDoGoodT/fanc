@@ -476,7 +476,7 @@ LPAREN exp RPAREN
 binop:
 exp DIV exp
 {
-    auto binop = new _T_Binop($1, $3);
+    auto binop = new _T_Binop($1, $3, _T_Binop::_DIV_);
     if(!binop->is_legal(yylineno)) {
         exit(1);
     }
@@ -484,7 +484,7 @@ exp DIV exp
 }
 |exp MULT exp
 {
-    auto binop = new _T_Binop($1, $3);
+    auto binop = new _T_Binop($1, $3, _T_Binop::_MULT_);
     if(!binop->is_legal(yylineno)) {
         exit(1);
     }
@@ -492,7 +492,7 @@ exp DIV exp
 }
 |exp SUB exp
 {
-    auto binop = new _T_Binop($1, $3);
+    auto binop = new _T_Binop($1, $3, _T_Binop::_MINUS_);
     if(!binop->is_legal(yylineno)) {
         exit(1);
     }
@@ -500,7 +500,7 @@ exp DIV exp
 }
 |exp ADD exp
 {
-    auto binop = new _T_Binop($1, $3);
+    auto binop = new _T_Binop($1, $3, _T_Binop::_PLUS_);
     if(!binop->is_legal(yylineno)) {
         exit(1);
     }

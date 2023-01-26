@@ -3,4 +3,4 @@ results/
 analyzer.tab.cpp
 analyzer.tab.hpp
 cmake-build-debug/
-**.zip
+*.zip

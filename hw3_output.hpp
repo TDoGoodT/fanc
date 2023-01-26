@@ -51,7 +51,6 @@ const std::map<int, std::string> tokens{
         { BOOL, "BOOL"},
         { ADD, "ADD"},
         { SUB, "SUB"},
-        { RELOP, "RELOP"},
         { AND, "AND"},
         { RPAREN, "RPAREN"},
         { RBRACE, "RBRACE"},

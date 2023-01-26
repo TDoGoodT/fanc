@@ -8,11 +8,11 @@
 #include "visitor.hpp"
 
 struct Marker {
-    virtual void accept() const = 0;
+    virtual void accept() = 0;
 };
 
 struct InitMarker : public Marker {
-    void accept() const override;
+    void accept() override;
     InitMarker() {accept();}
 };
 

@@ -10,7 +10,6 @@ string      (\"([^\n\r\"\\]|\\[rnt\"\\])+\")
 num         (0|[1-9][0-9]*)
 to_ignore   ((\/\/[^\r\n]*[ \r|\n|\r\n]?)|([\r\n\t\ ]+))
 id          ([a-zA-Z][a-zA-Z0-9]*)
-relop       (==|!=|<|>|<=|>=)
 mult        (\*)
 div         (\/)
 add         (\+)
@@ -39,8 +38,13 @@ continue                        { return CONTINUE; }
 \)                              { return RPAREN; }
 \{                              { return LBRACE; }
 \}                              { return RBRACE; }
-=                               { return ASSIGN; }
-{relop}                         { return RELOP; }
+(=)                             { return ASSIGN; }
+(>)                             { return GT; }
+(>=)                             { return GE; }
+(<)                             { return LT; }
+(<=)                             { return LE; }
+(!=)                             { return NE; }
+(==)                             { return EQ; }
 {mult}                          { return MULT; }
 {div}                           { return DIV; }
 {sub}                           { return SUB; }

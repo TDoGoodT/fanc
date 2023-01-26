@@ -91,7 +91,7 @@ bool validations::has_value(struct _T_Exp *exp) {
 
 
 bool validations::is_bool(struct _T_Exp *exp) {
-    return exp->type->to_string() == "BOOL";
+    return exp->type->typeCase == _T_Type::_BOOL_;
 }
 
 bool validations::is_castable(_T_Type::Type fromType, _T_Type::Type toTypeCase, bool explicit_cast) {

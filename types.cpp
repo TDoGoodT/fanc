@@ -3,15 +3,17 @@
 //
 #include "types.hpp"
 #include "hw3_output.hpp"
+#include "visitor.hpp"
 #include <vector>
 #include <string>
+#include <cassert>
 
 using namespace std;
 using namespace output;
 
 Visitor& visitor = Visitor::instance();
 
-vector<string> _T_Formals::to_strings() const {
+vector<string> _T_Formals::to_strings() {
     vector<string> strings;
     for (auto formal: formal_list->formal_list) {
         strings.push_back(formal->id->type->to_string());
@@ -19,16 +21,16 @@ vector<string> _T_Formals::to_strings() const {
     return strings;
 }
 
-void _T_Formals::accept() const {
+void _T_Formals::accept() {
     visitor.visit(this);
 }
 
-string _T_FuncDecl::get_name() const {
+string _T_FuncDecl::get_name() {
     auto formal_names = formals->to_strings();
     return makeFunctionType(id->type->to_string(), formal_names);
 }
 
-void _T_FuncDecl::accept() const {
+void _T_FuncDecl::accept() {
     visitor.visit(this);
 }
 
@@ -36,7 +38,7 @@ string _T_RetType::to_string() {
     return type->to_string();
 }
 
-void _T_RetType::accept() const {
+void _T_RetType::accept() {
     visitor.visit(this);
 }
 
@@ -48,7 +50,7 @@ std::map<_T_Type::Type, std::string> type_to_name{
         {_T_Type::Type::_BYTE_,   "BYTE"}
 };
 
-string _T_Type::to_string() const {
+string _T_Type::to_string() {
     return type_to_name.at(typeCase);
 }
 
@@ -56,7 +58,44 @@ bool is_numeric(_T_Type::Type type) {
     return type == _T_Type::Type::_INT_ || type == _T_Type::Type::_BYTE_;
 }
 
-bool _T_Relop::is_legal(int line) const {
+bool _T_Relop::is_legal(int line) {
+    if (!is_numeric(rExp->type->typeCase) || !is_numeric(rExp->type->typeCase)) {
+        errorMismatch(line);
+        return false;
+    }
+    return true;
+}
+
+void _T_Relop::accept() {
+    visitor.visit(this);
+}
+
+static string to_string(RelopCase relopCase) {
+    switch (relopCase) {
+        case _GT_:
+            return ">";
+            break;
+        case _LT_:
+            return "<";
+            break;
+        case _GE_:
+            return ">=";
+            break;
+        case _LE_:
+            return "<=";
+            break;
+        case _EQ_:
+            return "==";
+            break;
+        case _NE_:
+            return "!=";
+            break;
+    }
+    return "";
+}
+
+
+bool _T_Binop::is_legal(int line) {
     if (!is_numeric(r_exp->type->typeCase) || !is_numeric(r_exp->type->typeCase)) {
         errorMismatch(line);
         return false;
@@ -64,84 +103,72 @@ bool _T_Relop::is_legal(int line) const {
     return true;
 }
 
-void _T_Relop::accept() const {
+void _T_Binop::accept() {
     visitor.visit(this);
 }
 
-bool _T_Binop::is_legal(int line) const {
-    if (!is_numeric(r_exp->type->typeCase) || !is_numeric(r_exp->type->typeCase)) {
-        errorMismatch(line);
-        return false;
-    }
-    return true;
-}
-
-void _T_Binop::accept() const {
+void _T_Continue::accept() {
     visitor.visit(this);
 }
 
-void _T_Continue::accept() const {
+void _T_Break::accept() {
     visitor.visit(this);
 }
 
-void _T_Break::accept() const {
+void _T_Program::accept() {
     visitor.visit(this);
 }
 
-void _T_Program::accept() const {
+void _T_Funcs::accept() {
     visitor.visit(this);
 }
 
-void _T_Funcs::accept() const {
+void _T_FormalsList::accept() {
     visitor.visit(this);
 }
 
-void _T_FormalsList::accept() const {
+void _T_FormalDecl::accept() {
     visitor.visit(this);
 }
 
-void _T_FormalDecl::accept() const {
+void _T_Statements::accept() {
     visitor.visit(this);
 }
 
-void _T_Statements::accept() const {
+void _T_While::accept() {
     visitor.visit(this);
 }
 
-void _T_While::accept() const {
+void _T_If_pattern::accept() {
     visitor.visit(this);
 }
 
-void _T_If_pattern::accept() const {
+void _T_Return::accept() {
     visitor.visit(this);
 }
 
-void _T_Return::accept() const {
+void _T_FunctionCall::accept() {
     visitor.visit(this);
 }
 
-void _T_FunctionCall::accept() const {
+void _T_Call::accept() {
     visitor.visit(this);
 }
 
-void _T_Call::accept() const {
+void _T_Int::accept() {
     visitor.visit(this);
 }
 
-void _T_Int::accept() const {
+void _T_Number::accept() {
     visitor.visit(this);
 }
 
-void _T_Number::accept() const {
-    visitor.visit(this);
-}
-
-void _T_CallExp::accept() const {
+void _T_CallExp::accept() {
     visitor.visit(this);
 }
 
 
-void _T_Exp::accept() const {
+void _T_Exp::accept() {
     visitor.visit(this);
 }
 
@@ -156,54 +183,54 @@ _T_Type::Type _T_Exp::get_type(_T_Exp *pExp, _T_Exp *pExp1) {
     exit(1);
 }
 
-void _T_Byte::accept() const {
+void _T_Byte::accept() {
     visitor.visit(this);
 }
 
-void _T_Cast::accept() const {
+void _T_Cast::accept() {
     visitor.visit(this);
 }
 
-void _T_LogicOp::accept() const {
+void _T_LogicOp::accept() {
     visitor.visit(this);
 }
 
-void _T_And::accept() const {
+void _T_And::accept() {
     visitor.visit(this);
 }
 
-void _T_Or::accept() const {
+void _T_Or::accept() {
     visitor.visit(this);
 }
 
-void _T_Not::accept() const {
+void _T_Not::accept() {
     visitor.visit(this);
 }
 
-void _T_String::accept() const {
+void _T_String::accept() {
     visitor.visit(this);
 }
 
-void _T_Trinari::accept() const {
+void _T_Trinari::accept() {
     visitor.visit(this);
 }
 
-void _T_Bool::accept() const {
+void _T_Bool::accept() {
     visitor.visit(this);
 }
 
-void _T_Statement::accept() const {
+void _T_Statement::accept() {
     visitor.visit(this);
 }
 
-void _T_Declaration::accept() const {
+void _T_Declaration::accept() {
     visitor.visit(this);
 }
 
-void _T_Assignment::accept() const {
+void _T_Assignment::accept() {
     visitor.visit(this);
 }
 
-void _T_LateAssignment::accept() const {
+void _T_LateAssignment::accept() {
     visitor.visit(this);
 }

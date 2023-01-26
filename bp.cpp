@@ -49,7 +49,7 @@ void CodeBuffer::printCodeBuffer() {
     }
 }
 
-vector<pair<int, BranchLabelIndex>> CodeBuffer::makelist(pair<int, BranchLabelIndex> item) {
+const vector<pair<int, BranchLabelIndex>> CodeBuffer::makelist(const pair<int, BranchLabelIndex> item) {
     vector<pair<int, BranchLabelIndex>> newList;
     newList.push_back(item);
     return newList;
@@ -73,8 +73,12 @@ void CodeBuffer::printGlobalBuffer() {
     }
 }
 
-void CodeBuffer::emitLabel(const char *string) {
-    emit(string, true);
+int CodeBuffer::emitLabel(const char *string) {
+    return emit(string, true);
+}
+
+int CodeBuffer::getLineNumber() {
+    return buffer.size() - 1;
 }
 
 // ******** Helper Methods ********** //

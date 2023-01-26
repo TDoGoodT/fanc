@@ -1,6 +1,8 @@
 %{
     #include <string>
     #include "types.hpp"
+    #include "debug.hpp"
+    #include "markers.hpp"
     #include "hw3_output.hpp"
     #include "symbol_table_manager.hpp"
     #include "actions.hpp"
@@ -51,7 +53,12 @@ struct _T_CallExp*          T_CallExp;
 }
 %left OR
 %left AND
-%left RELOP
+%left GT
+%left GE
+%left LT
+%left LE
+%left NE
+%left EQ
 %left ADD
 %left SUB
 %left MULT
@@ -109,14 +116,14 @@ struct _T_CallExp*          T_CallExp;
 %%
 program:
 initMarker funcs
-{ $$ = new _T_Program($2);  }
-initMarker: { InitMarker(); }
+{debug(); $$ = new _T_Program($2);  }
+initMarker: {debug(); InitMarker(); }
 ;
 funcs:
 epsilon
-{ $$ = new _T_Funcs(); }
+{debug(); $$ = new _T_Funcs(); }
 | funcDecl funcs
-{
+{debug();
     $2->func_list.push_back($1);
     $$ = $2;
 }
@@ -125,7 +132,7 @@ epsilon
 funcDecl:
 retType fid LPAREN formals RPAREN LBRACE statements RBRACE
 
-{
+{debug();
     $2->type = $1->type;
     auto func = new _T_FuncDecl($2, $4, $7);
     end_function(&store, func);
@@ -135,8 +142,8 @@ retType fid LPAREN formals RPAREN LBRACE statements RBRACE
 
 fid:
 id
-{
-    if(is_func_declared(&store, $1)) {
+{debug();
+    if(is_func_declared(&store, $1)) {debug();
         errorDef(yylineno, $1->id);
         exit(1);
     }
@@ -147,32 +154,32 @@ id
 
 retType:
 type
-{
+{debug();
     begin_function(&store, $1->typeCase);
     auto ret     = new _T_RetType($1);
     $$ = ret;
 }
 | void
-{
+{debug();
     begin_function(&store, _T_Type::_VOID_);
     $$ = new _T_RetType(_T_Type::_VOID_);;
 }
 ;
 formals:
 epsilon
-{ $$ =  new _T_Formals(); }
+{debug(); $$ =  new _T_Formals(); }
 | formalsList
-{
+{debug();
     insert_function_params(&store, $1);
     $$ = new _T_Formals($1);
 }
 ;
 formalsList:
 formalDecl
-{ $$ =  new _T_FormalsList($1); }
+{debug(); $$ =  new _T_FormalsList($1); }
 | formalDecl COMMA formalsList
-{
-    if(is_formal_declared($3->formal_list, $1->id)){
+{debug();
+    if(is_formal_declared($3->formal_list, $1->id)){debug();
         errorDef(yylineno, $1->id->id);
         exit(1);
     }
@@ -183,8 +190,8 @@ formalDecl
 
 formalDecl:
 type id
-{
-    if(is_id_declared(&store, $2)) {
+{debug();
+    if(is_id_declared(&store, $2)) {debug();
         errorDef(yylineno, $2->id);
         exit(1);
     }
@@ -195,12 +202,12 @@ type id
 
 statements:
 statement
-{
+{debug();
     auto stmnts = new _T_Statements($1);
     $$ = stmnts;
 }
 | statements statement
-{
+{debug();
     $1->statement_list.push_back($2);
     $$ = $1;
 }
@@ -208,10 +215,10 @@ statement
 
 statement:
 lbrace statements rbrace
-{ $$ = $2; }
+{debug(); $$ = $2; }
 | type id SC
-{
-    if(is_id_declared(&store, $2)) {
+{debug();
+    if(is_id_declared(&store, $2)) {debug();
         errorDef(yylineno, $2->id);
         exit(1);
     }
@@ -222,17 +229,17 @@ lbrace statements rbrace
 
 }
 | type id ASSIGN exp SC
-{
-    if(is_id_declared(&store, $2)) {
+{debug();
+    if(is_id_declared(&store, $2)) {debug();
         errorDef(yylineno, $2->id);
         exit(1);
     }
     $2->type = $1;
-    if(!is_type_compatible($2, $4)) {
+    if(!is_type_compatible($2, $4)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
-    if(has_value($4)) {
+    if(has_value($4)) {debug();
         $2->value = $4->value;
     }
     insert_id(&store, $2);
@@ -241,16 +248,16 @@ lbrace statements rbrace
 
 }
 | id ASSIGN exp SC
-{
-    if(!is_id_declared(&store, $1)) {
+{debug();
+    if(!is_id_declared(&store, $1)) {debug();
         errorUndef(yylineno, $1->id);
         exit(1);
     }
     _T_Id* id = get_id(&store, $1);
-    if(id == nullptr) {
+    if(id == nullptr) {debug();
         errorUndef(yylineno, id->id);
     }
-    if(!is_type_compatible(id, $3)) {
+    if(!is_type_compatible(id, $3)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -261,16 +268,16 @@ lbrace statements rbrace
 
 }
 | call SC
-{
+{debug();
     auto call = new _T_Call($1);
-    if(!is_call_correct(&store, call, yylineno)) {
+    if(!is_call_correct(&store, call, yylineno)) {debug();
         exit(1);
     }
     $$ = call;
 }
 | RETURN SC
-{
-    if(store.get_current_func_ret_type() != _T_Type::_VOID_) {
+{debug();
+    if(store.get_current_func_ret_type() != _T_Type::_VOID_) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -278,8 +285,8 @@ lbrace statements rbrace
     $$ = ret;
 }
 | RETURN exp SC
-{
-    if(!is_castable($2->type->typeCase, store.get_current_func_ret_type())) {
+{debug();
+    if(!is_castable($2->type->typeCase, store.get_current_func_ret_type())) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -288,21 +295,21 @@ lbrace statements rbrace
 }
 | if_pattern
 | while LPAREN bool_exp RPAREN statement
-{
+{debug();
     end_while(&store);
     $$ = new _T_While($3, $5);
 }
 | BREAK SC
-{
-    if(!store.get_in_while()) {
+{debug();
+    if(!store.get_in_while()) {debug();
         errorUnexpectedBreak(yylineno);
         exit(1);
     }
     $$ = new _T_Break();
 }
 | CONTINUE SC
-{
-    if(!store.get_in_while()) {
+{debug();
+    if(!store.get_in_while()) {debug();
         errorUnexpectedContinue(yylineno);
         exit(1);
     }
@@ -312,30 +319,30 @@ lbrace statements rbrace
 
 while:
 WHILE
-{ begin_while(&store); }
+{debug(); begin_while(&store); }
 ;
 
 if_pattern:
 if LPAREN bool_exp RPAREN statement
-{ $$ = new _T_If_pattern($3, $5); }
+{debug(); $$ = new _T_If_pattern($3, $5); }
 | if LPAREN bool_exp RPAREN statement else statement
-{ $$ = new _T_If_pattern($3, $5, $7); }
+{debug(); $$ = new _T_If_pattern($3, $5, $7); }
 ;
 
 if:
 IF
-{ begin_if(&store); }
+{debug(); begin_if(&store); }
 ;
 
 else:
 ELSE
-{ begin_else(&store); }
+{debug(); begin_else(&store); }
 ;
 
 bool_exp:
 exp
-{
-    if(!validations::is_bool($1)) {
+{debug();
+    if(!validations::is_bool($1)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -345,8 +352,8 @@ exp
 
 call:
 id LPAREN expList RPAREN
-{
-    if(!is_func_declared(&store, $1)) {
+{debug();
+    if(!is_func_declared(&store, $1)) {debug();
         errorUndefFunc(yylineno, $1->id);
         exit(1);
     }
@@ -354,8 +361,8 @@ id LPAREN expList RPAREN
     $$ = new _T_CallExp(id, $3);
 }
 | id LPAREN RPAREN
-{
-    if(!is_func_declared(&store, $1)) {
+{debug();
+    if(!is_func_declared(&store, $1)) {debug();
         errorUndefFunc(yylineno, $1->id);
         exit(1);
     }
@@ -366,9 +373,9 @@ id LPAREN expList RPAREN
 
 expList:
 exp
-{ $$ = new _T_ExpList($1); }
+{debug(); $$ = new _T_ExpList($1); }
 | exp COMMA expList
-{
+{debug();
     $3->exp_list.insert($3->exp_list.begin(), $1);
     $$ = $3;
 }
@@ -376,19 +383,19 @@ exp
 
 type:
 int
-{ $$ = $1; }
+{debug(); $$ = $1; }
 | byte
-{ $$ = $1; }
+{debug(); $$ = $1; }
 | bool
-{ $$ = $1; }
+{debug(); $$ = $1; }
 ;
 
 exp:
 LPAREN exp RPAREN
-{ $$ = $2; }
+{debug(); $$ = $2; }
 | exp IF LPAREN bool_exp RPAREN ELSE exp
-{
-    if(!is_type_compatible($1, $7)) {
+{debug();
+    if(!is_type_compatible($1, $7)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -396,44 +403,46 @@ LPAREN exp RPAREN
     $$ = tri;
 }
 | binop
-{ $$ = $1;  }
+{debug();
+ $$ = $1;  }
 | id
-{
-    if(!is_id_declared(&store, $1)) {
+{debug();
+    if(!is_id_declared(&store, $1)) {debug();
         errorUndef(yylineno, $1->id);
         exit(1);
     }
     $$ = get_id(&store, $1);
 }
 | call
-{
+{debug();
     _T_Call call($1);
-    if(!is_call_correct(&store, &call, yylineno)) {
+    if(!is_call_correct(&store, &call, yylineno)) {debug();
         exit(1);
     }
     $$ = $1;
 }
 | number
-{ $$ = new _T_Int($1->value); }
+{debug(); $$ = new _T_Int($1->value); }
 | number B
-{
+{debug();
     auto byte = new _T_Byte($1->value);
-    if(is_byte_to_large(byte)) {
+    if(is_byte_to_large(byte)) {debug();
         errorByteTooLarge(yylineno, to_string(*byte->value));
         exit(1);
     }
     $$ = byte;
 }
 | string
-{ $$ = $1; }
+{debug(); $$ = $1; }
 | true
-{ $$ = $1; }
+{debug();
+$$ = $1; }
 | false
-{ $$ = $1; }
+{debug(); $$ = $1; }
 | NOT exp
-{
+{debug();
     auto nott = new _T_Not($2);
-    if(!is_type_compatible(nott, $2)) {
+    if(!is_type_compatible(nott, $2)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -441,33 +450,73 @@ LPAREN exp RPAREN
 
 }
 | exp AND exp
-{
-    if(!is_bool($1) && !is_bool($3)) {
+{debug();
+    if(!is_bool($1) && !is_bool($3)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
     $$ = new _T_And($1, $3);
 }
 | exp OR exp
-{
-    if(!is_bool($1) && !is_bool($3)) {
+{debug();
+    if(!is_bool($1) && !is_bool($3)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
     $$ = new _T_Or($1, $3);
 }
-| exp RELOP exp
-{
-    auto relop = new _T_Relop($1, $3);
-    if(!relop->is_legal(yylineno)) {
+| exp NE exp
+{debug();
+    auto relop = new _T_Relop($1, $3, RelopCase::_NE_);
+    if(!relop->is_legal(yylineno)) {debug();
+        exit(1);
+    }
+    $$ = relop;
+}
+| exp EQ exp
+{debug();
+    auto relop = new _T_Relop($1, $3, RelopCase::_EQ_);
+    if(!relop->is_legal(yylineno)) {debug();
+        exit(1);
+    }
+    $$ = relop;
+}
+| exp LT exp
+{debug();
+    auto relop = new _T_Relop($1, $3, RelopCase::_LT_);
+    if(!relop->is_legal(yylineno)) {debug();
+        exit(1);
+    }
+    $$ = relop;
+}
+| exp LE exp
+{debug();
+    auto relop = new _T_Relop($1, $3, RelopCase::_LE_);
+    if(!relop->is_legal(yylineno)) {debug();
+        exit(1);
+    }
+    $$ = relop;
+}
+| exp GT exp
+{debug();
+    auto relop = new _T_Relop($1, $3, RelopCase::_GT_);
+    if(!relop->is_legal(yylineno)) {debug();
+        exit(1);
+    }
+    $$ = relop;
+}
+| exp GE exp
+{debug();
+    auto relop = new _T_Relop($1, $3, RelopCase::_GE_);
+    if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
     $$ = relop;
 }
 | LPAREN type RPAREN exp
-{
+{debug();debug();
     auto cast = new _T_Cast($2, $4);
-    if(!is_castable($2->typeCase, $4->type->typeCase, true)) {
+    if(!is_castable($2->typeCase, $4->type->typeCase, true)) {debug();
         errorMismatch(yylineno);
         exit(1);
     }
@@ -477,33 +526,33 @@ LPAREN exp RPAREN
 
 binop:
 exp DIV exp
-{
+{debug();
     auto binop = new _T_Binop($1, $3, _T_Binop::_DIV_);
-    if(!binop->is_legal(yylineno)) {
+    if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
     $$ = binop;
 }
 |exp MULT exp
-{
+{debug();
     auto binop = new _T_Binop($1, $3, _T_Binop::_MULT_);
-    if(!binop->is_legal(yylineno)) {
+    if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
     $$ = binop;
 }
 |exp SUB exp
-{
+{debug();
     auto binop = new _T_Binop($1, $3, _T_Binop::_MINUS_);
-    if(!binop->is_legal(yylineno)) {
+    if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
     $$ = binop;
 }
 |exp ADD exp
-{
+{debug();
     auto binop = new _T_Binop($1, $3, _T_Binop::_PLUS_);
-    if(!binop->is_legal(yylineno)) {
+    if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
     $$ = binop;
@@ -512,20 +561,20 @@ exp DIV exp
 
 number:
 NUM
-{ $$ = new _T_Int(new int(stoi(yytext))); }
+{debug(); $$ = new _T_Int(new int(stoi(yytext))); }
 ;
 
 id:
 ID
-{
+{debug();
     auto id = store.get_id(yytext);
-    if(id != nullptr) {
+    if(id != nullptr) {debug();
         $$ = id;
-    } else {
+    } else {debug();
         auto id = store.get_func(yytext);
-        if(id != nullptr) {
+        if(id != nullptr) {debug();
             $$ = id;
-        } else {
+        } else {debug();
             $$ = new _T_Id(string(yytext), nullptr);
         }
     }
@@ -534,37 +583,37 @@ ID
 
 string:
 STRING
-{ $$ = new _T_String(string(yytext)); }
+{debug(); $$ = new _T_String(string(yytext)); }
 ;
 
 void:
 VOID
-{ $$ = new _T_Type(_T_Type::_VOID_); }
+{debug(); $$ = new _T_Type(_T_Type::_VOID_); }
 ;
 
 int:
 INT
-{ $$ = new _T_Type(_T_Type::_INT_); }
+{debug(); $$ = new _T_Type(_T_Type::_INT_); }
 ;
 
 byte:
 BYTE
-{ $$ = new _T_Type(_T_Type::_BYTE_); }
+{debug(); $$ = new _T_Type(_T_Type::_BYTE_); }
 ;
 
 bool:
 BOOL
-{ $$ = new _T_Type(_T_Type::_BOOL_); }
+{debug(); $$ = new _T_Type(_T_Type::_BOOL_); }
 ;
 
 false:
 FALSE
-{ $$ = new _T_Bool(false); }
+{debug(); $$ = new _T_Bool(false); }
 ;
 
 true:
 TRUE
-{ $$ = new _T_Bool(true); }
+{debug(); $$ = new _T_Bool(true); }
 ;
 
 
@@ -572,12 +621,12 @@ TRUE
 
 rbrace:
 RBRACE
-{ end_scope(&store); }
+{debug(); end_scope(&store); }
 ;
 
 lbrace:
 LBRACE
-{ begin_scope(&store); }
+{debug(); begin_scope(&store); }
 ;
 
 

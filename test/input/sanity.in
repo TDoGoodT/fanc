@@ -5,6 +5,9 @@ void printOk(bool isOk) {
 void main()
 {
     int x = 4;
+    bool a;
+    bool bas = true;
+    bool c = bas or not false;
     byte y = 100 b;
     printOk(x>y);
     int z;

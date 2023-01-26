@@ -4,6 +4,6 @@
 
 #include "markers.hpp"
 
-void InitMarker::accept() const {
+void InitMarker::accept() {
     Visitor::instance().visit(this);
 }

@@ -34,7 +34,7 @@ public:
     int emit(const std::string &command, bool isGlobal = false);
 
     //gets a pair<int,BranchLabelIndex> item of the form {buffer_location, branch_label_index} and creates a list for it
-    static vector<pair<int, BranchLabelIndex>> makelist(pair<int, BranchLabelIndex> item);
+    const static vector<pair<int, BranchLabelIndex>> makelist(pair<int, BranchLabelIndex> item);
 
     //merges two lists of {buffer_location, branch_label_index} items
     static vector<pair<int, BranchLabelIndex>>
@@ -68,7 +68,9 @@ public:
 
     string newTemp();
 
-    void emitLabel(const char *string);
+    int emitLabel(const char *string);
+
+    int getLineNumber();
 };
 
 #endif

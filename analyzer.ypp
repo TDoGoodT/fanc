@@ -2,6 +2,7 @@
     #include <string>
     #include "types.hpp"
     #include "debug.hpp"
+    #include "makers.hpp"
     #include "markers.hpp"
     #include "hw3_output.hpp"
     #include "symbol_table_manager.hpp"
@@ -116,12 +117,12 @@ struct _T_CallExp*          T_CallExp;
 %%
 program:
 initMarker funcs
-{debug(); $$ = new _T_Program($2);  }
+{debug(); $$ = MakeProgram($2);  }
 initMarker: {debug(); InitMarker(); }
 ;
 funcs:
 epsilon
-{debug(); $$ = new _T_Funcs(); }
+{debug(); $$ = MakeFuncs(); }
 | funcDecl funcs
 {debug();
     $2->func_list.push_back($1);
@@ -134,7 +135,7 @@ retType fid LPAREN formals RPAREN LBRACE statements RBRACE
 
 {debug();
     $2->type = $1->type;
-    auto func = new _T_FuncDecl($2, $4, $7);
+    auto func = MakeFuncDecl($2, $4, $7);
     end_function(&store, func);
     $$ = func;
 }
@@ -156,27 +157,27 @@ retType:
 type
 {debug();
     begin_function(&store, $1->typeCase);
-    auto ret     = new _T_RetType($1);
+    auto ret     = MakeRetType($1);
     $$ = ret;
 }
 | void
 {debug();
     begin_function(&store, _T_Type::_VOID_);
-    $$ = new _T_RetType(_T_Type::_VOID_);;
+    $$ = MakeRetType(_T_Type::_VOID_);;
 }
 ;
 formals:
 epsilon
-{debug(); $$ =  new _T_Formals(); }
+{debug(); $$ =  MakeFormals(); }
 | formalsList
 {debug();
     insert_function_params(&store, $1);
-    $$ = new _T_Formals($1);
+    $$ = MakeFormals($1);
 }
 ;
 formalsList:
 formalDecl
-{debug(); $$ =  new _T_FormalsList($1); }
+{debug(); $$ =  MakeFormalsList($1); }
 | formalDecl COMMA formalsList
 {debug();
     if(is_formal_declared($3->formal_list, $1->id)){debug();
@@ -196,14 +197,14 @@ type id
         exit(1);
     }
     $2->type = $1;
-    $$ = new _T_FormalDecl($2);
+    $$ = MakeFormalDecl($2);
 }
 ;
 
 statements:
 statement
 {debug();
-    auto stmnts = new _T_Statements($1);
+    auto stmnts = MakeStatements($1);
     $$ = stmnts;
 }
 | statements statement
@@ -224,7 +225,7 @@ lbrace statements rbrace
     }
     $2->type = $1;
     insert_id(&store, $2);
-    auto decl = new _T_Declaration($1, $2);
+    auto decl = MakeDeclaration($1, $2);
     $$ = decl;
 
 }
@@ -243,7 +244,7 @@ lbrace statements rbrace
         $2->value = $4->value;
     }
     insert_id(&store, $2);
-    auto ass = new _T_Assignment($1, $2, $4);
+    auto ass = MakeAssignment($1, $2, $4);
     $$ = ass;
 
 }
@@ -263,13 +264,13 @@ lbrace statements rbrace
     }
     $1->type = $3->type;
     $1->value = $3->value;
-    auto lateAss = new _T_LateAssignment($1, $3);
+    auto lateAss = MakeLateAssignment($1, $3);
     $$ = lateAss;
 
 }
 | call SC
 {debug();
-    auto call = new _T_Call($1);
+    auto call = MakeCall($1);
     if(!is_call_correct(&store, call, yylineno)) {debug();
         exit(1);
     }
@@ -281,7 +282,7 @@ lbrace statements rbrace
         errorMismatch(yylineno);
         exit(1);
     }
-    auto ret = new _T_Return();
+    auto ret = MakeReturn();
     $$ = ret;
 }
 | RETURN exp SC
@@ -290,14 +291,14 @@ lbrace statements rbrace
         errorMismatch(yylineno);
         exit(1);
     }
-    auto ret = new _T_Return($2);
+    auto ret = MakeReturn($2);
     $$ = ret;
 }
 | if_pattern
 | while LPAREN bool_exp RPAREN statement
 {debug();
     end_while(&store);
-    $$ = new _T_While($3, $5);
+    $$ = MakeWhile($3, $5);
 }
 | BREAK SC
 {debug();
@@ -305,7 +306,7 @@ lbrace statements rbrace
         errorUnexpectedBreak(yylineno);
         exit(1);
     }
-    $$ = new _T_Break();
+    $$ = MakeBreak();
 }
 | CONTINUE SC
 {debug();
@@ -313,7 +314,7 @@ lbrace statements rbrace
         errorUnexpectedContinue(yylineno);
         exit(1);
     }
-    $$ = new _T_Continue();
+    $$ = MakeContinue();
 }
 ;
 
@@ -324,9 +325,9 @@ WHILE
 
 if_pattern:
 if LPAREN bool_exp RPAREN statement
-{debug(); $$ = new _T_If_pattern($3, $5); }
+{debug(); $$ = MakeIf_pattern($3, $5); }
 | if LPAREN bool_exp RPAREN statement else statement
-{debug(); $$ = new _T_If_pattern($3, $5, $7); }
+{debug(); $$ = MakeIf_pattern($3, $5, $7); }
 ;
 
 if:
@@ -346,6 +347,7 @@ exp
         errorMismatch(yylineno);
         exit(1);
     }
+    $1->is_bool = true;
     $$ = $1;
 }
 ;
@@ -358,7 +360,7 @@ id LPAREN expList RPAREN
         exit(1);
     }
     auto id = get_func(&store, $1);
-    $$ = new _T_CallExp(id, $3);
+    $$ = MakeCallExp(id, $3);
 }
 | id LPAREN RPAREN
 {debug();
@@ -367,13 +369,13 @@ id LPAREN expList RPAREN
         exit(1);
     }
     auto id = get_func(&store, $1);
-    $$ = new _T_CallExp(id);
+    $$ = MakeCallExp(id);
 }
 ;
 
 expList:
 exp
-{debug(); $$ = new _T_ExpList($1); }
+{debug(); $$ = MakeExpList($1); }
 | exp COMMA expList
 {debug();
     $3->exp_list.insert($3->exp_list.begin(), $1);
@@ -399,7 +401,7 @@ LPAREN exp RPAREN
         errorMismatch(yylineno);
         exit(1);
     }
-    auto tri = new _T_Trinari($1, $4, $7);
+    auto tri = MakeTrinari($1, $4, $7);
     $$ = tri;
 }
 | binop
@@ -422,10 +424,10 @@ LPAREN exp RPAREN
     $$ = $1;
 }
 | number
-{debug(); $$ = new _T_Int($1->value); }
+{debug(); $$ = MakeInt($1->value); }
 | number B
 {debug();
-    auto byte = new _T_Byte($1->value);
+    auto byte = MakeByte($1->value);
     if(is_byte_to_large(byte)) {debug();
         errorByteTooLarge(yylineno, to_string(*byte->value));
         exit(1);
@@ -441,7 +443,7 @@ $$ = $1; }
 {debug(); $$ = $1; }
 | NOT exp
 {debug();
-    auto nott = new _T_Not($2);
+    auto nott = MakeNot($2);
     if(!is_type_compatible(nott, $2)) {debug();
         errorMismatch(yylineno);
         exit(1);
@@ -455,7 +457,7 @@ $$ = $1; }
         errorMismatch(yylineno);
         exit(1);
     }
-    $$ = new _T_And($1, $3);
+    $$ = MakeAnd($1, $3);
 }
 | exp OR exp
 {debug();
@@ -463,11 +465,11 @@ $$ = $1; }
         errorMismatch(yylineno);
         exit(1);
     }
-    $$ = new _T_Or($1, $3);
+    $$ = MakeOr($1, $3);
 }
 | exp NE exp
 {debug();
-    auto relop = new _T_Relop($1, $3, RelopCase::_NE_);
+    auto relop = MakeRelop($1, $3, RelopCase::_NE_);
     if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -475,7 +477,7 @@ $$ = $1; }
 }
 | exp EQ exp
 {debug();
-    auto relop = new _T_Relop($1, $3, RelopCase::_EQ_);
+    auto relop = MakeRelop($1, $3, RelopCase::_EQ_);
     if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -483,7 +485,7 @@ $$ = $1; }
 }
 | exp LT exp
 {debug();
-    auto relop = new _T_Relop($1, $3, RelopCase::_LT_);
+    auto relop = MakeRelop($1, $3, RelopCase::_LT_);
     if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -491,7 +493,7 @@ $$ = $1; }
 }
 | exp LE exp
 {debug();
-    auto relop = new _T_Relop($1, $3, RelopCase::_LE_);
+    auto relop = MakeRelop($1, $3, RelopCase::_LE_);
     if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -499,7 +501,7 @@ $$ = $1; }
 }
 | exp GT exp
 {debug();
-    auto relop = new _T_Relop($1, $3, RelopCase::_GT_);
+    auto relop = MakeRelop($1, $3, RelopCase::_GT_);
     if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -507,7 +509,7 @@ $$ = $1; }
 }
 | exp GE exp
 {debug();
-    auto relop = new _T_Relop($1, $3, RelopCase::_GE_);
+    auto relop = MakeRelop($1, $3, RelopCase::_GE_);
     if(!relop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -515,7 +517,7 @@ $$ = $1; }
 }
 | LPAREN type RPAREN exp
 {debug();debug();
-    auto cast = new _T_Cast($2, $4);
+    auto cast = MakeCast($2, $4);
     if(!is_castable($2->typeCase, $4->type->typeCase, true)) {debug();
         errorMismatch(yylineno);
         exit(1);
@@ -527,7 +529,7 @@ $$ = $1; }
 binop:
 exp DIV exp
 {debug();
-    auto binop = new _T_Binop($1, $3, _T_Binop::_DIV_);
+    auto binop = MakeBinop($1, $3, _T_Binop::_DIV_);
     if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -535,7 +537,7 @@ exp DIV exp
 }
 |exp MULT exp
 {debug();
-    auto binop = new _T_Binop($1, $3, _T_Binop::_MULT_);
+    auto binop = MakeBinop($1, $3, _T_Binop::_MULT_);
     if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -543,7 +545,7 @@ exp DIV exp
 }
 |exp SUB exp
 {debug();
-    auto binop = new _T_Binop($1, $3, _T_Binop::_MINUS_);
+    auto binop = MakeBinop($1, $3, _T_Binop::_MINUS_);
     if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -551,7 +553,7 @@ exp DIV exp
 }
 |exp ADD exp
 {debug();
-    auto binop = new _T_Binop($1, $3, _T_Binop::_PLUS_);
+    auto binop = MakeBinop($1, $3, _T_Binop::_PLUS_);
     if(!binop->is_legal(yylineno)) {debug();
         exit(1);
     }
@@ -561,7 +563,7 @@ exp DIV exp
 
 number:
 NUM
-{debug(); $$ = new _T_Int(new int(stoi(yytext))); }
+{debug(); $$ = MakeInt(new int(stoi(yytext))); }
 ;
 
 id:
@@ -575,7 +577,7 @@ ID
         if(id != nullptr) {debug();
             $$ = id;
         } else {debug();
-            $$ = new _T_Id(string(yytext), nullptr);
+            $$ = MakeId(string(yytext), nullptr);
         }
     }
 }
@@ -583,37 +585,37 @@ ID
 
 string:
 STRING
-{debug(); $$ = new _T_String(string(yytext)); }
+{debug(); $$ = MakeString(string(yytext)); }
 ;
 
 void:
 VOID
-{debug(); $$ = new _T_Type(_T_Type::_VOID_); }
+{debug(); $$ = MakeType(_T_Type::_VOID_); }
 ;
 
 int:
 INT
-{debug(); $$ = new _T_Type(_T_Type::_INT_); }
+{debug(); $$ = MakeType(_T_Type::_INT_); }
 ;
 
 byte:
 BYTE
-{debug(); $$ = new _T_Type(_T_Type::_BYTE_); }
+{debug(); $$ = MakeType(_T_Type::_BYTE_); }
 ;
 
 bool:
 BOOL
-{debug(); $$ = new _T_Type(_T_Type::_BOOL_); }
+{debug(); $$ = MakeType(_T_Type::_BOOL_); }
 ;
 
 false:
 FALSE
-{debug(); $$ = new _T_Bool(false); }
+{debug(); $$ = MakeBool(false); }
 ;
 
 true:
 TRUE
-{debug(); $$ = new _T_Bool(true); }
+{debug(); $$ = MakeBool(true); }
 ;
 
 

@@ -115,7 +115,6 @@ const std::string rules[] = {
 
 extern int yylineno;
 extern char* yytext;
-extern int yyleng;
 extern int yydebug;
 extern int yylex();
 #endif

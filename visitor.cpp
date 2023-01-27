@@ -45,7 +45,7 @@ void Visitor::visit(_T_Binop *element) {
     string l_str = element->l_exp->place;
     if(r_str.empty()) {
         assert(element->r_exp->value != nullptr);
-        r_str = to_string(element->r_exp->type) + " " + to_string(*element->r_exp->value);
+        r_str =  to_string(*element->r_exp->value);
     }
     if(l_str.empty()) {
         assert(element->l_exp->value != nullptr);
@@ -74,9 +74,22 @@ void Visitor::visit(_T_Exp *element) {
 }
 
 void Visitor::visit(_T_Or *element) {
+    string r_str = element->r_value->place;
+    string l_str = element->l_value->place;
+    element->place = codeBuffer.newTemp();
+    int line = codeBuffer.getLineNumber();
+    element->trueList = CodeBuffer::makelist({line, FIRST});
+    element->falseList = CodeBuffer::makelist({line, SECOND});
 
 }
-void Visitor::visit(_T_And *element) {}
+void Visitor::visit(_T_And *element) {
+    string r_str = element->r_value->place;
+    string l_str = element->l_value->place;
+    element->place = codeBuffer.newTemp();
+    int line = codeBuffer.getLineNumber();
+    element->trueList = CodeBuffer::makelist({line, FIRST});
+    element->falseList = CodeBuffer::makelist({line, SECOND});
+}
 
 void Visitor::visit(_T_Number *element) {
 
@@ -84,7 +97,7 @@ void Visitor::visit(_T_Number *element) {
 
 void Visitor::visit(_T_Declaration *element) {
     element->place = codeBuffer.newTemp();
-    codeBuffer.emit(element->place + " = add " + to_string(element->type) + " 0," + to_string(element->type) + " 0" );
+    codeBuffer.emit(element->place + " = add " + to_string(element->type) + " 0, 0" );
 }
 
 void Visitor::visit(_T_Assignment *element) {
@@ -93,11 +106,10 @@ void Visitor::visit(_T_Assignment *element) {
     code += element->id->place + " = add ";
     if (element->value->value != nullptr && element->value->place.empty()) {
         assert(element->value->type != nullptr);
-        code += to_string(element->value->type) + " " + to_string(*element->value->value) + ", " +
-                to_string(element->value->type) + " 0";
+        code += to_string(element->value->type) + " " + to_string(*element->value->value) + ", 0";
     } else {
         assert(not element->value->place.empty());
-        code += element->value->place + ", " + to_string(element->value->type) + " 0";
+        code += to_string(element->value->type) + " " + element->value->place + ", 0";
 
     }
     codeBuffer.emit(code);
@@ -135,15 +147,14 @@ void Visitor::visit(_T_Statement *element) {
 void Visitor::visit(_T_Not *element) {
     element->place = codeBuffer.newTemp();
     assert(not element->value->place.empty());
-    codeBuffer.emit(element->place + " = xor " + to_string(element->value->type) + " " + element->value->place + " 1");
+    codeBuffer.emit(element->place + " = xor " + to_string(element->value->type) + " " + element->value->place + ", 1");
 }
 
 
 void Visitor::visit(_T_Relop *element) {
+    string label = codeBuffer.genLabel();
     element->place = codeBuffer.newTemp();
     string op_str = getLlvmRelop(element->relopCase);
-    codeBuffer.emit(element->place + " = icmp " + op_str + " " + element->lExp->place + ", " + element->rExp->place);
-    codeBuffer.emit("br i1 " + element->place + ", label @ , label @");
     int line = codeBuffer.getLineNumber();
     element->trueList = CodeBuffer::makelist({line, FIRST});
     element->falseList = CodeBuffer::makelist({line, SECOND});
@@ -189,8 +200,7 @@ void Visitor::visit(_T_Void *element) {
 void Visitor::visit(_T_Bool *element) {
     element->place = codeBuffer.newTemp();
     assert(element->type != nullptr && element->type->typeCase == _T_Type::_BOOL_);
-    codeBuffer.emit(element->place + " = add " + to_string(element->type) + " " + (element->value ? "1" : "0") + ", " +
-                    to_string(element->type) + " 0");
+    codeBuffer.emit(element->place + " = add " + to_string(element->type) + " " + (element->value ? "1" : "0") + ", 0");
 }
 
 void Visitor::visit(_T_RetType *element) {

@@ -29,6 +29,14 @@ Id* MakeFId(Id* id){
     declare_func(&store, id);
     return id;
 }
+Id* MakeId(Id* id){
+    if(!is_id_declared(&store, id)) {
+        errorUndef(yylineno, id->id);
+        exit(1);
+    }
+    Id* retId = get_id(&store, id);
+    return retId;
+}
 
 Exp* MakeExp(struct Type *type, int *value) {
     Exp *p = new Exp(type, value);
@@ -57,12 +65,11 @@ ExpList *MakeExpList(Exp *exp) {
 
 Id* MakeId(string id, struct Type *type) {
     auto p = new Id(id, type);
-    p->accept();
     return p;
 }
 Id* MakeId(string text) {
     auto id = store.get_id(text);
-    if(id != nullptr) {;
+    if(id != nullptr) {
         return id;
     } else {
         auto id = store.get_func(text);
@@ -79,7 +86,7 @@ CallExp* MakeCallExp(struct Id *function) {
         exit(1);
     }
     auto id = get_func(&store, function);
-    auto p = new CallExp(function);
+    auto p = new CallExp(id);
     p->accept();
     return p;
 }
@@ -90,7 +97,7 @@ CallExp* MakeCallExp(struct Id *function, struct ExpList *args) {
         exit(1);
     }
     auto id = get_func(&store, function);
-    auto p = new CallExp(function, args);
+    auto p = new CallExp(id, args);
     p->accept();
     return p;
 }
@@ -138,12 +145,20 @@ And* MakeAnd(struct Exp *lValue, AndMarker* marker, struct Exp *rValue) {
         errorMismatch(yylineno);
         exit(1);
     }
-    marker->accept();
     auto p = new And(lValue, rValue, marker);
     p->accept();
     return p;
 }
-
+OrMarker* MakeOrMarker() {
+    auto p = new OrMarker();
+    p->accept();
+    return p;
+}
+AndMarker* MakeAndMarker() {
+    auto p = new AndMarker();
+    p->accept();
+    return p;
+}
 Or* MakeOr(struct Exp *l_value, OrMarker* marker, struct Exp *r_value) {
     if(!is_bool(l_value) && !is_bool(r_value)) {
         errorMismatch(yylineno);
@@ -206,7 +221,7 @@ Trinari* MakeTrinari(struct Exp *true_exp, struct Exp *cond_exp, struct Exp *fal
 }
 
 Bool* MakeBool(bool value) {
-    auto p = new Bool(value);
+    auto p = new Bool(new bool(value));
     p->accept();
     return p;
 }
@@ -419,11 +434,9 @@ Funcs *MakeFuncs(FuncDecl* func, Funcs* funcs) {
     return funcs;
 }
 
-Program *MakeProgram(struct InitMarker* initMarker, struct Funcs *funcs, EndMarker* endMarker) {
+Program *MakeProgram(struct Funcs *funcs) {
     auto *p = new Program(funcs);
-    initMarker->accept();
     p->accept();
-    endMarker->accept();
     return p;
 }
 Exp* MakeBoolExp(Exp* exp) {
@@ -432,6 +445,7 @@ Exp* MakeBoolExp(Exp* exp) {
         exit(1);
     }
     exp->is_bool = true;
+    exp->accept();
     return exp;
 }
 Break* MakeBreak() {
@@ -450,6 +464,16 @@ Continue* MakeContinue() {
         exit(1);
     }
     auto p = new Continue();
+    p->accept();
+    return p;
+}
+InitMarker* MakeInitMarker() {
+    auto p = new InitMarker();
+    p->accept();
+    return p;
+}
+EndMarker* MakeEndMarker() {
+    auto p = new EndMarker();
     p->accept();
     return p;
 }

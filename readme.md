@@ -6,8 +6,9 @@
   - [x] division by zero.
   - [x] mask results when overflow.
 - [x] calculations for boolean expressions.
-- [ ] saving and loading variables in the stack.
+- [x] saving and loading variables in the stack.
 - [ ] sequence of statements.
 - [ ] control flows management.
 - [ ] io functions management.
 - [ ] functions management.
+- [ ] when saving to stack save only i32, pad with zext when bool/byte variable.

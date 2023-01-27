@@ -19,7 +19,6 @@ struct T  {
 
     virtual void accept() = 0;
 
-    string &place = *new string();
 };
 
 struct NonT : public T {
@@ -44,9 +43,8 @@ struct Exp : public NonT {
 
     struct Type *type;
     int *value = nullptr;
-    vector<pair<int, BranchLabelIndex>> nextList;
-    vector<pair<int, BranchLabelIndex>> breakList;
-    vector<pair<int, BranchLabelIndex>> continueList;
+    string &place = *new string();
+
     vector<pair<int, BranchLabelIndex>> trueList;
     vector<pair<int, BranchLabelIndex>> falseList;
 
@@ -80,10 +78,10 @@ struct ExpList : public NonT {
 
 
 struct Id : public Exp {
-    void accept() override {}
+    void accept() override;
 
     string id;
-
+    bool isSaved;
     Id(string id, struct Type *type) : id(id), Exp(type) {}
 };
 
@@ -139,13 +137,13 @@ struct LogicOp : public Exp {
 struct And : public LogicOp {
     void accept() override;
     struct AndMarker* andMarker;
-    And(struct Exp *r_value, struct Exp *l_value, struct AndMarker* andMarker) : LogicOp(r_value, l_value), andMarker(std::move(andMarker)) {}
+    And(struct Exp *lValue, struct Exp *rValue, struct AndMarker* andMarker) : LogicOp(rValue, lValue), andMarker(std::move(andMarker)) {}
 };
 
 struct Or : public LogicOp {
     void accept() override;
     struct OrMarker*   orMarker;
-    Or(struct Exp *r_value, struct Exp *l_value, struct OrMarker* orMarker) : LogicOp(r_value, l_value), orMarker(std::move(orMarker)) {}
+    Or(struct Exp *lValue, struct Exp *rValue, struct OrMarker* orMarker) : LogicOp(rValue, lValue), orMarker(std::move(orMarker)) {}
 };
 
 struct Not : public Exp {
@@ -221,14 +219,14 @@ struct Bool : public Exp {
     void accept() override;
 
     // rule 2
-    bool value;
+    bool *value;
 
-    explicit Bool(bool value) : Exp(new Type(Type::BOOL)), value(value) {}
+    explicit Bool(bool *value) : Exp(new Type(Type::BOOL)), value(value) {}
 };
 
 struct Statement : public NonT {
     void accept() override;
-
+    vector<pair<int, BranchLabelIndex>> nextList;
     Statement() = default;
 };
 

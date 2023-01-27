@@ -3,12 +3,14 @@
 //
 
 #include <cassert>
+#include <iostream>
 #include "visitor.hpp"
-CodeBuffer& codeBuffer = CodeBuffer::instance();
+
+CodeBuffer &codeBuffer = CodeBuffer::instance();
 
 
 string to_string(Type *pType) {
-    switch(pType->typeCase) {
+    switch (pType->typeCase) {
         case Type::INT:
             return " i32 ";
         case Type::BOOL:
@@ -35,38 +37,31 @@ string getLlvmBinOp(BinopCase binopCase) {
     }
     exit(0);
 }
+
 void Visitor::visit(Binop *element) {
     string opStr = getLlvmBinOp(element->binopCase);
-    string rStr = element->rExp->place;
-    string lStr = element->lExp->place;
-    if(rStr.empty()) {
-        assert(element->rExp->value != nullptr);
-        rStr =  to_string(*element->rExp->value);
-    }
-    if(lStr.empty()) {
-        assert(element->lExp->value != nullptr);
-        lStr = to_string(element->lExp->type) + " " + to_string(*element->lExp->value);
-    }
+    string rStr = getValuePlace(element->rExp);
+    string lStr = getValuePlace(element->lExp);
     element->place = codeBuffer.newTemp();
-    if(element->binopCase == _DIV_) {
+    if (element->binopCase == _DIV_) {
         string zeroDivVar = codeBuffer.newTemp();
         codeBuffer.emit(zeroDivVar + " = icmp eq i32 " + rStr + ", 0");
         codeBuffer.emit("br i1 " + zeroDivVar + " , label @ , label @");
-        codeBuffer.emit("call i32 (i8*, ...) @printf(i8* getelementptr([24 x i8], [24 x i8]* @.zero_div_err, i32 0, i32 0))");
+        codeBuffer.emit(
+                "call i32 (i8*, ...) @printf(i8* getelementptr([24 x i8], [24 x i8]* @.zero_div_err, i32 0, i32 0))");
         codeBuffer.emit("call void @exit(i32 0)");
         codeBuffer.emit("br label @");
     }
-    if(element->type->typeCase != Type::BYTE) {
-        codeBuffer.emit(element->place + " = " + opStr + to_string(element->type) + lStr + ", " + rStr);
+    if (element->type->typeCase != Type::BYTE) {
+        codeBuffer.emit("%"+element->place + " = " + opStr + to_string(element->type) + "%"+lStr + ", %" + rStr);
         return;
     }
     string maskedVar = codeBuffer.newTemp();
-    if(element->rExp->type->typeCase == Type::INT) {
+    if (element->rExp->type->typeCase == Type::INT) {
         codeBuffer.emit(maskedVar + " = and i32 " + rStr + ", 255");
         rStr = maskedVar;
     }
 }
-
 
 void Visitor::visit(Exp *element) {
 
@@ -78,6 +73,7 @@ void Visitor::visit(Or *element) {
     element->falseList = element->rExp->falseList;
 
 }
+
 void Visitor::visit(And *element) {
     codeBuffer.bpatch(element->lExp->trueList, element->andMarker->label);
     element->trueList = element->rExp->trueList;
@@ -87,27 +83,72 @@ void Visitor::visit(And *element) {
 void Visitor::visit(Number *element) {
 
 }
+
 void Visitor::visit(Int *element) {
     element->place = codeBuffer.newTemp();
     assert(element->type->typeCase == Type::INT);
-    codeBuffer.emit(element->place + " = " + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " + to_string(*element->value) + ", 0");
+    codeBuffer.emit("%" + element->place + " = "
+                    + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " + to_string(*element->value) +
+                    ", 0; visited Int " + to_string(*element->value));
 }
+
 void Visitor::visit(Byte *element) {
     element->place = codeBuffer.newTemp();
     assert(element->type->typeCase == Type::BYTE);
-    codeBuffer.emit(element->place + " = " + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " + to_string(*element->value) + ", 0");
+    codeBuffer.emit("%" + element->place + " = " + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " +
+                    to_string(*element->value) + ", 0; visited Byte " + to_string(*element->value));
 }
 
 void Visitor::visit(Declaration *element) {
-
+    element->id->place = codeBuffer.newVar();
+    codeBuffer.emit("%" + element->id->place + " = alloca i32; visited Declaration " +
+                    element->type->to_string() + " " + element->id->id);
 }
 
 void Visitor::visit(Assignment *element) {
+    if (element->value->type->typeCase == Type::BOOL) {
+        handleBoolAssignment(element->value);
+    }
+    element->id->place = codeBuffer.newVar();
+    codeBuffer.emit("%" + element->id->place + " = alloca i32; visited Assignment " +
+                    element->type->to_string() + " " + element->id->id + " = %" + element->value->place);
+    string valuePlace = getValuePlace(element->value);
+    codeBuffer.emit(
+            "store i32 %" + valuePlace + ", i32 * %" +
+            element->id->place);
+}
 
+void Visitor::handleBoolAssignment(struct Exp *value) {
+    string trueLabel = codeBuffer.genLabel();
+    int trueLine = codeBuffer.emit("br label @; true ");
+    string falseLabel = codeBuffer.genLabel();
+    int falseLine = codeBuffer.emit("br label @; false ");
+    string nextLabel = codeBuffer.genLabel();
+    codeBuffer.emit("%" + value->place + " = phi i1 [1,%" + trueLabel + "], [0,%" + falseLabel + "]");
+
+    codeBuffer.bpatch(value->trueList, trueLabel);
+    codeBuffer.bpatch(value->falseList, falseLabel);
+    codeBuffer.bpatch(CodeBuffer::makelist({trueLine, FIRST}), nextLabel);
+    codeBuffer.bpatch(CodeBuffer::makelist({falseLine, FIRST}), nextLabel);
 }
 
 void Visitor::visit(LateAssignment *element) {
+    if (element->value->type->typeCase == Type::BOOL) {
+        handleBoolAssignment(element->value);
+    }
+    string valuePlace = getValuePlace(element->value);
+    codeBuffer.emit("store " + to_string(element->value->type) + "%" + valuePlace + ", " +
+                    to_string(element->id->type) + "* %" + element->id->place);
+}
 
+string Visitor::getValuePlace(const Exp *value) {
+    string valuePlace = value->place;
+    if(value->place.empty()) return to_string(*value->value);
+    if(value->place.find('t') == string::npos) {
+        valuePlace = codeBuffer.newTemp();
+        codeBuffer.emit("%" + valuePlace + " = load i32, i32* %" + value->place);
+    }
+    return valuePlace;
 };
 
 void Visitor::visit(FunctionCall *element) {
@@ -142,8 +183,11 @@ void Visitor::visit(Not *element) {
 
 void Visitor::visit(Relop *element) {
     string temp = codeBuffer.newTemp();
-    codeBuffer.emit(temp + " = icmp " + getLlvmRelop(element) + " " + to_string(element->type) + " " + element->lExp->place + ", " + element->rExp->place);
-    codeBuffer.emit("br i1 " + temp + ", label @, label @");
+    codeBuffer.emit(
+            "%" + temp + " = icmp " + getLlvmRelop(element) + " " + to_string(element->type) + " %" +
+            element->lExp->place +
+            ", %" + element->rExp->place);
+    codeBuffer.emit("br i1 %" + temp + ", label @, label @");
     element->trueList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
     element->falseList = CodeBuffer::makelist({codeBuffer.getLineNumber(), SECOND});
 }
@@ -151,17 +195,16 @@ void Visitor::visit(Relop *element) {
 void Visitor::visit(AndMarker *element) {
     element->label = codeBuffer.genLabel();
 }
+
 void Visitor::visit(OrMarker *element) {
     element->label = codeBuffer.genLabel();
 }
+
 void Visitor::visit(EndMarker *element) {
     codeBuffer.printCodeBuffer();
 }
-void Visitor::visit(If *element) {
 
-}
-
-string Visitor::getLlvmRelop(struct Relop* relop) {
+string Visitor::getLlvmRelop(struct Relop *relop) {
     switch (relop->relopCase) {
         case GT_:
             return " sgt ";
@@ -180,32 +223,11 @@ string Visitor::getLlvmRelop(struct Relop* relop) {
 }
 
 
-
-
-void Visitor::visit(Else *element) {
-
-}
-
-void Visitor::visit(Id *element) {
-
-}
-
-void Visitor::visit(String *element) {
-
-}
-
-void Visitor::visit(Cast *element) {
-
-}
-
-void Visitor::visit(Void *element) {
-
-}
-
 void Visitor::visit(Bool *element) {
-    codeBuffer.emit("br @");
-    if (element->value) element->trueList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
-    else element->falseList = CodeBuffer::makelist({codeBuffer.getLineNumber(), SECOND});
+    assert(element->type->typeCase == Type::BOOL);
+    codeBuffer.emit("br label @; visited Bool " + to_string(*element->value));
+    if (*element->value) element->trueList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
+    else element->falseList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
 }
 
 void Visitor::visit(RetType *element) {
@@ -261,16 +283,31 @@ void Visitor::visit(InitMarker *element) {
             R"(@.str_specifier = constant [4 x i8] c"%s\0A\00")",
             R"(@.zero_div_err = constant [24 x i8] c"Error division by zero\0A\00")"
     };
-    for (auto& glob: globals) {
+    for (auto &glob: globals) {
         codeBuffer.emitGlobal(glob);
     }
     codeBuffer.emitLabel("define void @printi(i32) {");
-    codeBuffer.emit("call i32 (i8*, ...) @printf(i8* getelementptr([4 x i8], [4 x i8]* @.int_specifier, i32 0, i32 0), i32 %0)");
+    codeBuffer.emit(
+            "call i32 (i8*, ...) @printf(i8* getelementptr([4 x i8], [4 x i8]* @.int_specifier, i32 0, i32 0), i32 %0)");
     codeBuffer.emit("ret void");
     codeBuffer.emitLabel("}");
     codeBuffer.emitLabel("define void @print(i8*) {");
-    codeBuffer.emit("call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.str_specifier, i32 0, i32 0), i8* %0)");
+    codeBuffer.emit(
+            "call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.str_specifier, i32 0, i32 0), i8* %0)");
     codeBuffer.emit("ret void");
     codeBuffer.emitLabel("}");
+    codeBuffer.emitLabel("program:");
+
+}
+
+void Visitor::visit(struct Cast *element) {
+
+}
+
+void Visitor::visit(struct String *element) {
+
+}
+
+void Visitor::visit(struct Id *element) {
 
 }

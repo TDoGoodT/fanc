@@ -15,7 +15,10 @@ CodeBuffer &CodeBuffer::instance() {
 }
 
 string CodeBuffer::newTemp() {
-    return "%t" + to_string(tempCounter++);
+    return "t" + to_string(tempCounter++);
+}
+string CodeBuffer::newVar() {
+    return to_string(varCounter++);
 }
 
 string CodeBuffer::genLabel() {

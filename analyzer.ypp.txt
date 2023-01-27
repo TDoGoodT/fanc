@@ -110,9 +110,9 @@ struct OrMarker*          T_OrMarker;
 %%
 program:
 init_marker funcs end_marker
-{debug(); $$ = MakeProgram($1, $2, $3);  }
-init_marker: {debug(); $$ = new InitMarker(); }
-end_marker: {debug(); $$ = new EndMarker(); }
+{debug(); $$ = MakeProgram($2);  }
+init_marker: {debug(); $$ = MakeInitMarker(); }
+end_marker: {debug(); $$ = MakeEndMarker(); }
 ;
 funcs:
 epsilon
@@ -244,13 +244,8 @@ LPAREN exp RPAREN
 | binop
 {debug(); $$ = $1;  }
 | id
-{debug();
-    if(!is_id_declared(&store, $1)) {debug();
-        errorUndef(yylineno, $1->id);
-        exit(1);
-    }
-    $$ = get_id(&store, $1);
-}
+{debug(); $$ = MakeId($1); }
+
 | call
 {debug();
     Call call($1);
@@ -291,8 +286,8 @@ $$ = $1; }
 | LPAREN type RPAREN exp
 {debug(); $$ = MakeCast($2, $4); }
 ;
-or_marker: {debug(); $$ = new OrMarker(); };
-and_marker: {debug(); $$ = new AndMarker(); };
+or_marker: {debug(); $$ = MakeOrMarker(); };
+and_marker: {debug(); $$ = MakeAndMarker(); };
 binop:
 exp DIV exp
 {debug(); $$ = MakeBinop($1, $3, _DIV_); }

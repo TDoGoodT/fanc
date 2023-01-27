@@ -164,6 +164,9 @@ void Number::accept() {
 void CallExp::accept() {
     Visitor::visit(this);
 }
+void Id::accept() {
+    Visitor::visit(this);
+}
 
 
 void Exp::accept() {

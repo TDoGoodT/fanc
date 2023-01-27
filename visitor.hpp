@@ -98,6 +98,9 @@ public:
 
 
 
+    static void handleBoolAssignment(Exp *value);
+
+    static string getValuePlace(const Exp *element);
 };
 
 

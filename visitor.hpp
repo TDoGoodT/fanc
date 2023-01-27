@@ -8,91 +8,96 @@
 
 #include <vector>
 #include "types.hpp"
-#include "markers.hpp"
 #include "bp.hpp"
 
 using namespace std;
 class Visitor {
 public:
-    static Visitor& instance();
+    static void visit(struct Exp *element);
 
-    static void visit(struct _T_Exp *element);
+    static void visit(struct Number *element);
 
-    static void visit(struct _T_Number *element);
+    static void visit(struct Declaration *element);
 
-    static void visit(struct _T_Declaration *element);
+    static void visit(struct Assignment *element);
 
-    static void visit(struct _T_Assignment *element);
+    static void visit(struct LateAssignment *element);
 
-    static void visit(struct _T_LateAssignment *element);
+    static void visit(struct FunctionCall *element);
 
-    static void visit(struct _T_FunctionCall *element);
+    static void visit(struct Return *element);
 
-    static void visit(struct _T_Return *element);
+    static void visit(struct Relop *element);
 
-    static void visit(struct _T_Relop *element);
+    static void visit(struct If_pattern *element);
 
-    static void visit(struct _T_If_pattern *element);
+    static void visit(struct While *element);
 
-    static void visit(struct _T_While *element);
+    static void visit(struct Statements *element);
 
-    static void visit(struct _T_Statements *element);
+    static void visit(struct Statement *element);
 
-    static void visit(struct _T_Statement *element);
+    static void visit(struct Not *element);
 
-    static void visit(struct _T_Not *element);
+    static void visit(struct If *element);
 
-    static void visit(struct _T_If *element);
+    static void visit(struct Else *element);
 
-    static void visit(struct _T_Else *element);
+    static void visit(struct Id *element);
 
-    static void visit(struct _T_Id *element);
+    static void visit(struct String *element);
 
-    static void visit(struct _T_String *element);
+    static void visit(struct Cast *element);
 
-    static void visit(struct _T_Cast *element);
+    static void visit(struct Void *element);
 
-    static void visit(struct _T_Void *element);
+    static void visit(struct Or *element);
 
-    static void visit(struct _T_Or *element);
+    static void visit(struct And *element);
 
-    static void visit(struct _T_And *element);
+    static void visit(struct Bool *element);
 
-    static void visit(struct _T_Bool *element);
+    static void visit(struct RetType *element);
 
-    static void visit(struct _T_RetType *element);
+    static void visit(struct Program *element);
 
-    static void visit(struct _T_Program *element);
+    static void visit(struct Funcs *element);
 
-    static void visit(struct _T_Funcs *element);
+    static void visit(struct FuncDecl *element);
 
-    static void visit(struct _T_FuncDecl *element);
+    static void visit(struct Formals *element);
 
-    static void visit(struct _T_Formals *element);
+    static void visit(struct FormalsList *element);
 
-    static void visit(struct _T_FormalsList *element);
+    static void visit(struct FormalDecl *element);
 
-    static void visit(struct _T_FormalDecl *element);
+    static void visit(struct ExpList *element);
 
-    static void visit(struct _T_ExpList *element);
+    static void visit(struct Binop *element);
 
-    static void visit(struct _T_Binop *element);
+    static void visit(struct Trinari *element);
 
-    static void visit(struct _T_Trinari *element);
+    static void visit(struct Call *element);
 
-    static void visit(struct _T_Call *element);
-
-    static void visit(struct _T_CallExp *element);
+    static void visit(struct CallExp *element);
 
     static void visit(struct InitMarker *element);
 
-    static void emitDivByZeroHandler(string &r_str);
+    static void visit(struct EndMarker *element);
 
-    static void emitBinop(_T_Binop *element, string &op_str, string &r_str, string &l_str);
+    static void visit(struct OrMarker *element);
 
-    static void emitMaskTargetByte(string& place);
+    static void visit(struct AndMarker *element);
 
-    static string getLlvmRelop(RelopCase relopCase);
+    static void visit(struct Int *element);
+
+    static void visit(struct Byte *element);
+
+
+    static string getLlvmRelop(struct Relop* relop);
+
+
+
 };
 
 

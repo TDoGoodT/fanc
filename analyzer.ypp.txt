@@ -1,0 +1,374 @@
+%{
+    #include "rules.hpp"
+    #include "debug.hpp"
+    extern int yyerror(const char *s);
+%}
+%union {
+struct Exp*              T_Exp;
+struct Number*           T_Number;
+struct Declaration*      T_Declaration;
+struct Assignment*       T_Assignment;
+struct LateAssignment*   T_LateAssignment;
+struct FunctionCall*     T_FunctionCall;
+struct Return*           T_Return;
+struct If_pattern*       T_If_pattern;
+struct While*            T_While;
+struct Statements*       T_Statements;
+struct Statement*        T_Statement;
+struct Not*              T_Not;
+struct If*               T_If;
+struct Else*             T_Else;
+struct Id*               T_Id;
+struct String*           T_String;
+struct Cast*             T_Cast;
+struct Void*             T_Void;
+struct Bool*             T_Bool;
+struct RetType*          T_RetType;
+struct Program*          T_Program;
+struct Funcs*            T_Funcs;
+struct FuncDecl*         T_FuncDecl;
+struct Formals*          T_Formals;
+struct FormalsList*      T_FormalsList;
+struct FormalDecl*       T_FormalDecl;
+struct ExpList*          T_ExpList;
+struct Type*             T_Type;
+struct Binop*            T_Binop;
+struct Trinari*          T_Trinari;
+struct Call*             T_Call;
+struct CallExp*          T_CallExp;
+struct InitMarker*          T_InitMarker;
+struct EndMarker*          T_EndMarker;
+struct AndMarker*          T_AndMarker;
+struct OrMarker*          T_OrMarker;
+}
+%left OR
+%left AND
+%left GT
+%left GE
+%left LT
+%left LE
+%left NE
+%left EQ
+%left ADD
+%left SUB
+%left MULT
+%left DIV
+%left NOT
+%left RPAREN
+%left LPAREN
+%left LBRACE
+%left RBRACE
+%right ASSIGN
+%right IF
+%right ELSE
+%token RETURN
+%token WHILE
+%token BREAK
+%token CONTINUE
+%token SC
+%token COMMA
+%token B
+%token NUM
+%token ID
+%token STRING
+%token VOID
+%token INT
+%token BYTE
+%token BOOL
+%token FALSE
+%token TRUE
+%type <T_Type> void
+%type <T_Type> int
+%type <T_Type> byte
+%type <T_Type> bool
+%type <T_Bool> false
+%type <T_Bool> true
+%type <T_String> string
+%type <T_Id> id
+%type <T_Id> fid
+%type <T_Program> program
+%type <T_Funcs> funcs
+%type <T_FuncDecl> funcDecl
+%type <T_RetType> retType
+%type <T_Formals> formals
+%type <T_FormalsList> formalsList
+%type <T_FormalDecl> formalDecl
+%type <T_Statements> statements
+%type <T_Statement> statement
+%type <T_Statement> if_pattern
+%type <T_ExpList> expList
+%type <T_Type> type
+%type <T_Exp> exp
+%type <T_Exp> bool_exp
+%type <T_Number> number
+%type <T_Binop> binop
+%type <T_CallExp> call
+%type <T_InitMarker> init_marker
+%type <T_EndMarker> end_marker
+%type <T_OrMarker> or_marker
+%type <T_AndMarker> and_marker
+%%
+program:
+init_marker funcs end_marker
+{debug(); $$ = MakeProgram($1, $2, $3);  }
+init_marker: {debug(); $$ = new InitMarker(); }
+end_marker: {debug(); $$ = new EndMarker(); }
+;
+funcs:
+epsilon
+{debug(); $$ = MakeFuncs(); }
+| funcDecl funcs
+{debug(); $$ = MakeFuncs($1,$2); }
+;
+
+funcDecl:
+retType fid LPAREN formals RPAREN LBRACE statements RBRACE
+{debug(); $$ = MakeFuncDecl($1, $2, $4, $7); }
+;
+
+fid:
+id
+{debug(); $$ = MakeFId($1); }
+;
+
+retType:
+type
+{debug(); $$ = MakeRetType($1); }
+| void
+{debug(); $$ = MakeRetType(Type::VOID); }
+;
+formals:
+epsilon
+{debug(); $$ =  MakeFormals(); }
+| formalsList
+{debug(); $$ = MakeFormals($1); }
+;
+formalsList:
+formalDecl
+{debug(); $$ =  MakeFormalsList($1); }
+| formalDecl COMMA formalsList
+{debug(); $$ = MakeFormalsList($1,$3); }
+;
+
+formalDecl:
+type id
+{debug(); $$ = MakeFormalDecl($1, $2); }
+;
+
+statements:
+statement
+{debug(); $$ = MakeStatements($1); }
+| statements statement
+{debug(); $$ = MakeStatements($1, $2); }
+;
+
+statement:
+lbrace statements rbrace
+{debug(); $$ = $2; }
+| type id SC
+{debug(); $$ = MakeDeclaration($1, $2); }
+| type id ASSIGN exp SC
+{debug(); $$ = MakeAssignment($1, $2, $4); }
+| id ASSIGN exp SC
+{debug(); $$ = MakeLateAssignment($1, $3); }
+| call SC
+{debug(); $$ = MakeCall($1); }
+| RETURN SC
+{debug(); $$ = MakeReturn();}
+| RETURN exp SC
+{debug(); $$ = MakeReturn($2); }
+| if_pattern
+| while LPAREN bool_exp RPAREN statement
+{debug(); $$ = MakeWhile($3, $5); }
+| BREAK SC
+{debug(); $$ = MakeBreak(); }
+| CONTINUE SC
+{debug(); $$ = MakeContinue(); }
+;
+
+while:
+WHILE
+{debug(); begin_while(&store); }
+;
+
+if_pattern:
+if LPAREN bool_exp RPAREN statement
+{debug(); $$ = MakeIf_pattern($3, $5); }
+| if LPAREN bool_exp RPAREN statement else statement
+{debug(); $$ = MakeIf_pattern($3, $5, $7); }
+;
+
+if:
+IF
+{debug(); begin_if(&store); }
+;
+
+else:
+ELSE
+{debug(); begin_else(&store); }
+;
+
+bool_exp:
+exp
+{debug(); $$ = MakeBoolExp($1); }
+;
+
+call:
+id LPAREN expList RPAREN
+{debug(); $$ = MakeCallExp($1, $3); }
+| id LPAREN RPAREN
+{debug(); $$ = MakeCallExp($1); }
+;
+
+expList:
+exp
+{debug(); $$ = MakeExpList($1); }
+| exp COMMA expList
+{debug(); MakeExpList($1, $3); }
+;
+
+type:
+int
+{debug(); $$ = $1; }
+| byte
+{debug(); $$ = $1; }
+| bool
+{debug(); $$ = $1; }
+;
+
+exp:
+LPAREN exp RPAREN
+{debug(); $$ = $2; }
+| exp IF LPAREN bool_exp RPAREN ELSE exp
+{debug(); $$ = MakeTrinari($1, $4, $7); }
+| binop
+{debug(); $$ = $1;  }
+| id
+{debug();
+    if(!is_id_declared(&store, $1)) {debug();
+        errorUndef(yylineno, $1->id);
+        exit(1);
+    }
+    $$ = get_id(&store, $1);
+}
+| call
+{debug();
+    Call call($1);
+    if(!is_call_correct(&store, &call, yylineno)) {debug();
+        exit(1);
+    }
+    $$ = $1;
+}
+| number
+{debug(); $$ = MakeInt($1->value); }
+| number B
+{debug(); $$ = MakeByte($1->value); }
+| string
+{debug(); $$ = $1; }
+| true
+{debug();
+$$ = $1; }
+| false
+{debug(); $$ = $1; }
+| NOT exp
+{debug(); $$ = MakeNot($2); }
+| exp AND and_marker exp
+{debug(); $$ = MakeAnd($1, $3, $4); }
+| exp OR or_marker exp
+{debug(); $$ = MakeOr($1, $3, $4); }
+| exp NE exp
+{debug(); $$ = MakeRelop($1, $3, RelopCase::NE_); }
+| exp EQ exp
+{debug(); $$ = MakeRelop($1, $3, RelopCase::EQ_); }
+| exp LT exp
+{debug(); $$ = MakeRelop($1, $3, RelopCase::LT_); }
+| exp LE exp
+{debug(); $$ = MakeRelop($1, $3, RelopCase::LE_); }
+| exp GT exp
+{debug(); $$ = MakeRelop($1, $3, RelopCase::GT_); }
+| exp GE exp
+{debug(); $$ = MakeRelop($1, $3, RelopCase::GE_); }
+| LPAREN type RPAREN exp
+{debug(); $$ = MakeCast($2, $4); }
+;
+or_marker: {debug(); $$ = new OrMarker(); };
+and_marker: {debug(); $$ = new AndMarker(); };
+binop:
+exp DIV exp
+{debug(); $$ = MakeBinop($1, $3, _DIV_); }
+|exp MULT exp
+{debug(); $$ = MakeBinop($1, $3, _MULT_); }
+|exp SUB exp
+{debug(); $$ = MakeBinop($1, $3, _MINUS_); }
+|exp ADD exp
+{debug(); $$ = MakeBinop($1, $3, _PLUS_); }
+;
+
+number:
+NUM
+{debug(); $$ = MakeNumber(new int(stoi(yytext))); }
+;
+
+id:
+ID
+{debug(); $$ = MakeId(string(yytext)); }
+;
+
+string:
+STRING
+{debug(); $$ = MakeString(string(yytext)); }
+;
+
+void:
+VOID
+{debug(); $$ = MakeType(Type::VOID); }
+;
+
+int:
+INT
+{debug(); $$ = MakeType(Type::INT); }
+;
+
+byte:
+BYTE
+{debug(); $$ = MakeType(Type::BYTE); }
+;
+
+bool:
+BOOL
+{debug(); $$ = MakeType(Type::BOOL); }
+;
+
+false:
+FALSE
+{debug(); $$ = MakeBool(false); }
+;
+
+true:
+TRUE
+{debug(); $$ = MakeBool(true); }
+;
+
+
+
+
+rbrace:
+RBRACE
+{debug(); end_scope(&store); }
+;
+
+lbrace:
+LBRACE
+{debug(); begin_scope(&store); }
+;
+
+
+
+epsilon:
+;
+%%
+int main() {
+    start_program(&store);
+    yyparse();
+    end_program(&store);
+}

@@ -20,9 +20,9 @@ struct SymbolTableManager {
     vector<SymbolTable *> symbol_table_stack;
     vector<int> offsets_stack;
 
-    void insert_id(struct _T_Id *id);
+    void insert_id(struct Id *id);
 
-    void insert_function_params(struct _T_FormalsList *formalsList);
+    void insert_function_params(struct FormalsList *formalsList);
 
     void end_scope();
 
@@ -32,7 +32,7 @@ struct SymbolTableManager {
 
     SymbolTableEntry * get_entry_by_name(const string &name) const;
 
-    void insert_function(struct _T_FuncDecl *func);
+    void insert_function(struct FuncDecl *func);
 
     void add_print_functions();
 };

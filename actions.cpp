@@ -25,25 +25,25 @@ void actions::end_scope(Store *store) {
     store->symbol_table_manager.end_scope();
 }
 
-void actions::insert_id(Store *store, struct _T_Id *id) {
+void actions::insert_id(Store *store, struct Id *id) {
     store->symbol_table_manager.insert_id(id);
 }
 
-void actions::begin_function(Store *store, _T_Type::Type type) {
+void actions::begin_function(Store *store, Type::TypeCase type) {
     store->symbol_table_manager.begin_scope();
     store->begin_function(type);
 }
 
-void actions::insert_function_params(Store *store, struct _T_FormalsList *formals) {
+void actions::insert_function_params(Store *store, struct FormalsList *formals) {
     store->crr_func_params = formals;
     store->insert_function_params(formals);
 }
 
-void actions::declare_func(Store *store, struct _T_Id *func_id) {
+void actions::declare_func(Store *store, struct Id *func_id) {
     store->declare_func(func_id);
 }
 
-void actions::end_function(Store *store, struct _T_FuncDecl *func) {
+void actions::end_function(Store *store, struct FuncDecl *func) {
     end_scope(store);
     store->end_function(func);
 }
@@ -68,10 +68,10 @@ void actions::begin_else(Store *store) {
     end_scope(store);
 }
 
-struct _T_Id *actions::get_id(Store *store, struct _T_Id *id) {
+struct Id *actions::get_id(Store *store, struct Id *id) {
     return store->get_id(id);
 }
 
-struct _T_Id *actions::get_func(Store *store, struct _T_Id *id) {
+struct Id *actions::get_func(Store *store, struct Id *id) {
     return store->get_func(id);
 }

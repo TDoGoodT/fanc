@@ -6,245 +6,250 @@
 #include "visitor.hpp"
 CodeBuffer& codeBuffer = CodeBuffer::instance();
 
-Visitor &Visitor::instance() {
-    static Visitor inst;//only instance
-    return inst;
-}
 
-string to_string(_T_Type *pType) {
+string to_string(Type *pType) {
     switch(pType->typeCase) {
-        case _T_Type::_INT_:
-            return "i32";
-        case _T_Type::_BOOL_:
-            return "i1";
-        case _T_Type::_BYTE_:
-            return "i8";
-        case _T_Type::_STRING_:
-        case _T_Type::_VOID_:
+        case Type::INT:
+            return " i32 ";
+        case Type::BOOL:
+            return " i1 ";
+        case Type::BYTE:
+            return " i8 ";
+        case Type::STRING:
+        case Type::VOID:
             assert(false);
     }
     exit(0);
 }
 
-string get_llvm_bin_op(_T_Binop::BinopCase binopCase) {
+string getLlvmBinOp(BinopCase binopCase) {
     switch (binopCase) {
-        case _T_Binop::_PLUS_:
-            return "add";
-        case _T_Binop::_MINUS_:
-            return "sub";
-        case _T_Binop::_MULT_:
-            return "mul";
-        case _T_Binop::_DIV_:
-            return "div";
+        case _PLUS_:
+            return " add ";
+        case _MINUS_:
+            return " sub ";
+        case _MULT_:
+            return " mul ";
+        case _DIV_:
+            return " sdiv ";
     }
     exit(0);
 }
-void Visitor::visit(_T_Binop *element) {
-    string op_str = get_llvm_bin_op(element->binopCase);
-    string r_str = element->r_exp->place;
-    string l_str = element->l_exp->place;
-    if(r_str.empty()) {
-        assert(element->r_exp->value != nullptr);
-        r_str =  to_string(*element->r_exp->value);
+void Visitor::visit(Binop *element) {
+    string opStr = getLlvmBinOp(element->binopCase);
+    string rStr = element->rExp->place;
+    string lStr = element->lExp->place;
+    if(rStr.empty()) {
+        assert(element->rExp->value != nullptr);
+        rStr =  to_string(*element->rExp->value);
     }
-    if(l_str.empty()) {
-        assert(element->l_exp->value != nullptr);
-        l_str = to_string(element->l_exp->type) + " " + to_string(*element->l_exp->value);
+    if(lStr.empty()) {
+        assert(element->lExp->value != nullptr);
+        lStr = to_string(element->lExp->type) + " " + to_string(*element->lExp->value);
     }
     element->place = codeBuffer.newTemp();
-    emitBinop(element, op_str, r_str, l_str);
-}
-
-void Visitor::emitMaskTargetByte(string& place) { codeBuffer.emit("andi " + place + ", 0xff"); }
-
-void Visitor::emitBinop(_T_Binop *element, string &op_str, string &r_str, string &l_str) {
-    if(element->binopCase == _T_Binop::_DIV_) {
-        emitDivByZeroHandler(r_str);
+    if(element->binopCase == _DIV_) {
+        string zeroDivVar = codeBuffer.newTemp();
+        codeBuffer.emit(zeroDivVar + " = icmp eq i32 " + rStr + ", 0");
+        codeBuffer.emit("br i1 " + zeroDivVar + " , label @ , label @");
+        codeBuffer.emit("call i32 (i8*, ...) @printf(i8* getelementptr([24 x i8], [24 x i8]* @.zero_div_err, i32 0, i32 0))");
+        codeBuffer.emit("call void @exit(i32 0)");
+        codeBuffer.emit("br label @");
     }
-    codeBuffer.emit(element->place + " = " + op_str  + " " + l_str + ", " + r_str);
-    if(element->type->typeCase == _T_Type::_BYTE_) {
-        emitMaskTargetByte(element->place);
+    if(element->type->typeCase != Type::BYTE) {
+        codeBuffer.emit(element->place + " = " + opStr + to_string(element->type) + lStr + ", " + rStr);
+        return;
+    }
+    string maskedVar = codeBuffer.newTemp();
+    if(element->rExp->type->typeCase == Type::INT) {
+        codeBuffer.emit(maskedVar + " = and i32 " + rStr + ", 255");
+        rStr = maskedVar;
     }
 }
 
-void Visitor::emitDivByZeroHandler(string &r_str) { codeBuffer.emit("beq " + r_str + ", 0, div_by_zero_handler"); }
 
-void Visitor::visit(_T_Exp *element) {
+void Visitor::visit(Exp *element) {
 
 }
 
-void Visitor::visit(_T_Or *element) {
-    string r_str = element->r_value->place;
-    string l_str = element->l_value->place;
+void Visitor::visit(Or *element) {
+    codeBuffer.bpatch(element->lExp->falseList, element->orMarker->label);
+    element->trueList = CodeBuffer::merge(element->lExp->trueList, element->rExp->trueList);
+    element->falseList = element->rExp->falseList;
+
+}
+void Visitor::visit(And *element) {
+    codeBuffer.bpatch(element->lExp->trueList, element->andMarker->label);
+    element->trueList = element->rExp->trueList;
+    element->falseList = CodeBuffer::merge(element->lExp->falseList, element->rExp->falseList);
+}
+
+void Visitor::visit(Number *element) {
+
+}
+void Visitor::visit(Int *element) {
     element->place = codeBuffer.newTemp();
-    int line = codeBuffer.getLineNumber();
-    element->trueList = CodeBuffer::makelist({line, FIRST});
-    element->falseList = CodeBuffer::makelist({line, SECOND});
-
+    assert(element->type->typeCase == Type::INT);
+    codeBuffer.emit(element->place + " = " + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " + to_string(*element->value) + ", 0");
 }
-void Visitor::visit(_T_And *element) {
-    string r_str = element->r_value->place;
-    string l_str = element->l_value->place;
+void Visitor::visit(Byte *element) {
     element->place = codeBuffer.newTemp();
-    int line = codeBuffer.getLineNumber();
-    element->trueList = CodeBuffer::makelist({line, FIRST});
-    element->falseList = CodeBuffer::makelist({line, SECOND});
+    assert(element->type->typeCase == Type::BYTE);
+    codeBuffer.emit(element->place + " = " + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " + to_string(*element->value) + ", 0");
 }
 
-void Visitor::visit(_T_Number *element) {
+void Visitor::visit(Declaration *element) {
 
 }
 
-void Visitor::visit(_T_Declaration *element) {
-    element->place = codeBuffer.newTemp();
-    codeBuffer.emit(element->place + " = add " + to_string(element->type) + " 0, 0" );
+void Visitor::visit(Assignment *element) {
+
 }
 
-void Visitor::visit(_T_Assignment *element) {
-    string code;
-    element->id->place = codeBuffer.newTemp();
-    code += element->id->place + " = add ";
-    if (element->value->value != nullptr && element->value->place.empty()) {
-        assert(element->value->type != nullptr);
-        code += to_string(element->value->type) + " " + to_string(*element->value->value) + ", 0";
-    } else {
-        assert(not element->value->place.empty());
-        code += to_string(element->value->type) + " " + element->value->place + ", 0";
+void Visitor::visit(LateAssignment *element) {
 
-    }
-    codeBuffer.emit(code);
-}
-
-void Visitor::visit(_T_LateAssignment *element) {
-    assert(not element->place.empty());
-    codeBuffer.emit(element->id->place + " = store " + element->place + " " + element->value->place);
 };
 
-void Visitor::visit(_T_FunctionCall *element) {
+void Visitor::visit(FunctionCall *element) {
 
 }
 
-void Visitor::visit(_T_Return *element) {
+void Visitor::visit(Return *element) {
 
 }
 
-void Visitor::visit(_T_If_pattern *element) {
+void Visitor::visit(If_pattern *element) {
 
 }
 
-void Visitor::visit(_T_While *element) {
+void Visitor::visit(While *element) {
 
 }
 
-void Visitor::visit(_T_Statements *element) {
+void Visitor::visit(Statements *element) {
 
 }
 
-void Visitor::visit(_T_Statement *element) {
+void Visitor::visit(Statement *element) {
 
 }
 
-void Visitor::visit(_T_Not *element) {
-    element->place = codeBuffer.newTemp();
-    assert(not element->value->place.empty());
-    codeBuffer.emit(element->place + " = xor " + to_string(element->value->type) + " " + element->value->place + ", 1");
+void Visitor::visit(Not *element) {
+    element->trueList = element->exp->falseList;
+    element->falseList = element->exp->trueList;
 }
 
 
-void Visitor::visit(_T_Relop *element) {
-    string label = codeBuffer.genLabel();
-    element->place = codeBuffer.newTemp();
-    string op_str = getLlvmRelop(element->relopCase);
-    int line = codeBuffer.getLineNumber();
-    element->trueList = CodeBuffer::makelist({line, FIRST});
-    element->falseList = CodeBuffer::makelist({line, SECOND});
+void Visitor::visit(Relop *element) {
+    string temp = codeBuffer.newTemp();
+    codeBuffer.emit(temp + " = icmp " + getLlvmRelop(element) + " " + to_string(element->type) + " " + element->lExp->place + ", " + element->rExp->place);
+    codeBuffer.emit("br i1 " + temp + ", label @, label @");
+    element->trueList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
+    element->falseList = CodeBuffer::makelist({codeBuffer.getLineNumber(), SECOND});
 }
 
-void Visitor::visit(_T_If *element) {
-
+void Visitor::visit(AndMarker *element) {
+    element->label = codeBuffer.genLabel();
 }
-
-static map<RelopCase, string> relopToLlvm = {
-    { RelopCase::_GE_, "sge" },
-    { RelopCase::_GT_, "sgt" },
-    { RelopCase::_LE_, "sle" },
-    { RelopCase::_LT_, "slt" },
-    { RelopCase::_EQ_, "eq" },
-    { RelopCase::_NE_, "ne" }
-};
-
-string Visitor::getLlvmRelop(RelopCase relopCase) {
-    return relopToLlvm[relopCase];
+void Visitor::visit(OrMarker *element) {
+    element->label = codeBuffer.genLabel();
 }
-
-void Visitor::visit(_T_Else *element) {
+void Visitor::visit(EndMarker *element) {
+    codeBuffer.printCodeBuffer();
+}
+void Visitor::visit(If *element) {
 
 }
 
-void Visitor::visit(_T_Id *element) {
-
-}
-
-void Visitor::visit(_T_String *element) {
-
-}
-
-void Visitor::visit(_T_Cast *element) {
-
-}
-
-void Visitor::visit(_T_Void *element) {
-
-}
-
-void Visitor::visit(_T_Bool *element) {
-    element->place = codeBuffer.newTemp();
-    assert(element->type != nullptr && element->type->typeCase == _T_Type::_BOOL_);
-    codeBuffer.emit(element->place + " = add " + to_string(element->type) + " " + (element->value ? "1" : "0") + ", 0");
-}
-
-void Visitor::visit(_T_RetType *element) {
-
-}
-
-void Visitor::visit(_T_Program *element) {
-
-}
-
-void Visitor::visit(_T_Funcs *element) {
-
-}
-
-void Visitor::visit(_T_FuncDecl *element) {
-
-}
-
-void Visitor::visit(_T_Formals *element) {
-
-}
-
-void Visitor::visit(_T_FormalsList *element) {
-
-}
-
-void Visitor::visit(_T_FormalDecl *element) {
-
-}
-
-void Visitor::visit(_T_ExpList *element) {
-
+string Visitor::getLlvmRelop(struct Relop* relop) {
+    switch (relop->relopCase) {
+        case GT_:
+            return " sgt ";
+        case GE_:
+            return " sge ";
+        case LT_:
+            return " slt ";
+        case LE_:
+            return " sle ";
+        case EQ_:
+            return " eq ";
+        case NE_:
+            return " ne ";
+    }
+    exit(-1);
 }
 
 
-void Visitor::visit(_T_Trinari *element) {
+
+
+void Visitor::visit(Else *element) {
 
 }
 
-void Visitor::visit(_T_Call *element) {
+void Visitor::visit(Id *element) {
 
 }
 
-void Visitor::visit(_T_CallExp *element) {
+void Visitor::visit(String *element) {
+
+}
+
+void Visitor::visit(Cast *element) {
+
+}
+
+void Visitor::visit(Void *element) {
+
+}
+
+void Visitor::visit(Bool *element) {
+    codeBuffer.emit("br @");
+    if (element->value) element->trueList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
+    else element->falseList = CodeBuffer::makelist({codeBuffer.getLineNumber(), SECOND});
+}
+
+void Visitor::visit(RetType *element) {
+
+}
+
+void Visitor::visit(Program *element) {
+
+}
+
+void Visitor::visit(Funcs *element) {
+
+}
+
+void Visitor::visit(FuncDecl *element) {
+
+}
+
+void Visitor::visit(Formals *element) {
+
+}
+
+void Visitor::visit(FormalsList *element) {
+
+}
+
+void Visitor::visit(FormalDecl *element) {
+
+}
+
+void Visitor::visit(ExpList *element) {
+
+}
+
+
+void Visitor::visit(Trinari *element) {
+
+}
+
+void Visitor::visit(Call *element) {
+
+}
+
+void Visitor::visit(CallExp *element) {
 
 }
 

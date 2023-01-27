@@ -13,7 +13,24 @@ struct Marker {
 
 struct InitMarker : public Marker {
     void accept() override;
-    InitMarker() {accept();}
+    InitMarker() = default;
+};
+
+struct EndMarker : public Marker {
+    void accept() override;
+    EndMarker() = default;
+};
+
+struct OrMarker : public Marker {
+    string label;
+    void accept() override;
+    OrMarker() = default;
+};
+
+struct AndMarker : public Marker {
+    string label;
+    void accept() override ;
+    AndMarker() = default;
 };
 
 #endif //ANALYZER_MARKERS_HPP

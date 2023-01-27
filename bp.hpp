@@ -22,6 +22,7 @@ class CodeBuffer {
     std::vector<std::string> buffer;
     std::vector<std::string> globalDefs;
     int tempCounter = 0;
+    int labelCounter = 0;
 public:
     static CodeBuffer &instance();
 
@@ -67,8 +68,9 @@ public:
     void printGlobalBuffer();
 
     string newTemp();
+    string newLabel();
 
-    int emitLabel(const char *string);
+    int emitLabel(const string&);
 
     int getLineNumber();
 };

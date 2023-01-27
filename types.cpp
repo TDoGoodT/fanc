@@ -6,59 +6,57 @@
 #include "visitor.hpp"
 #include <vector>
 #include <string>
-#include <cassert>
 
 using namespace std;
 using namespace output;
 
-Visitor& visitor = Visitor::instance();
 
-vector<string> _T_Formals::to_strings() {
+vector<string> Formals::to_strings() const {
     vector<string> strings;
-    for (auto formal: formal_list->formal_list) {
+    for (auto formal: formal_list->formalList) {
         strings.push_back(formal->id->type->to_string());
     }
     return strings;
 }
 
-void _T_Formals::accept() {
-    visitor.visit(this);
+void Formals::accept() {
+    Visitor::visit(this);
 }
 
-string _T_FuncDecl::get_name() {
+string FuncDecl::get_name() const {
     auto formal_names = formals->to_strings();
     return makeFunctionType(id->type->to_string(), formal_names);
 }
 
-void _T_FuncDecl::accept() {
-    visitor.visit(this);
+void FuncDecl::accept() {
+    Visitor::visit(this);
 }
 
-string _T_RetType::to_string() {
+string RetType::to_string() const {
     return type->to_string();
 }
 
-void _T_RetType::accept() {
-    visitor.visit(this);
+void RetType::accept() {
+    Visitor::visit(this);
 }
 
-std::map<_T_Type::Type, std::string> type_to_name{
-        {_T_Type::Type::_INT_,    "i32"},
-        {_T_Type::Type::_BOOL_,   "i1"},
-        {_T_Type::Type::_STRING_, "STRING"},
-        {_T_Type::Type::_VOID_,   "VOID"},
-        {_T_Type::Type::_BYTE_,   "BYTE"}
+std::map<Type::TypeCase, std::string> type_to_name{
+        {Type::TypeCase::INT,    "i32"},
+        {Type::TypeCase::BOOL,   "i1"},
+        {Type::TypeCase::STRING, "STRING"},
+        {Type::TypeCase::VOID,   "VOID"},
+        {Type::TypeCase::BYTE, "i8"}
 };
 
-string _T_Type::to_string() {
+string Type::to_string() const {
     return type_to_name.at(typeCase);
 }
 
-bool is_numeric(_T_Type::Type type) {
-    return type == _T_Type::Type::_INT_ || type == _T_Type::Type::_BYTE_;
+bool is_numeric(Type::TypeCase type) {
+    return type == Type::TypeCase::INT || type == Type::TypeCase::BYTE;
 }
 
-bool _T_Relop::is_legal(int line) {
+bool Relop::is_legal(int line) const {
     if (!is_numeric(rExp->type->typeCase) || !is_numeric(rExp->type->typeCase)) {
         errorMismatch(line);
         return false;
@@ -66,28 +64,28 @@ bool _T_Relop::is_legal(int line) {
     return true;
 }
 
-void _T_Relop::accept() {
-    visitor.visit(this);
+void Relop::accept() {
+    Visitor::visit(this);
 }
 
 static string to_string(RelopCase relopCase) {
     switch (relopCase) {
-        case _GT_:
+        case GT_:
             return ">";
             break;
-        case _LT_:
+        case LT_:
             return "<";
             break;
-        case _GE_:
+        case GE_:
             return ">=";
             break;
-        case _LE_:
+        case LE_:
             return "<=";
             break;
-        case _EQ_:
+        case EQ_:
             return "==";
             break;
-        case _NE_:
+        case NE_:
             return "!=";
             break;
     }
@@ -95,142 +93,142 @@ static string to_string(RelopCase relopCase) {
 }
 
 
-bool _T_Binop::is_legal(int line) {
-    if (!is_numeric(r_exp->type->typeCase) || !is_numeric(r_exp->type->typeCase)) {
+bool Binop::is_legal(int line) const {
+    if (!is_numeric(rExp->type->typeCase) || !is_numeric(rExp->type->typeCase)) {
         errorMismatch(line);
         return false;
     }
     return true;
 }
 
-void _T_Binop::accept() {
-    visitor.visit(this);
+void Binop::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Continue::accept() {
-    visitor.visit(this);
+void Continue::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Break::accept() {
-    visitor.visit(this);
+void Break::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Program::accept() {
-    visitor.visit(this);
+void Program::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Funcs::accept() {
-    visitor.visit(this);
+void Funcs::accept() {
+    Visitor::visit(this);
 }
 
-void _T_FormalsList::accept() {
-    visitor.visit(this);
+void FormalsList::accept() {
+    Visitor::visit(this);
 }
 
-void _T_FormalDecl::accept() {
-    visitor.visit(this);
+void FormalDecl::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Statements::accept() {
-    visitor.visit(this);
+void Statements::accept() {
+    Visitor::visit(this);
 }
 
-void _T_While::accept() {
-    visitor.visit(this);
+void While::accept() {
+    Visitor::visit(this);
 }
 
-void _T_If_pattern::accept() {
-    visitor.visit(this);
+void If_pattern::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Return::accept() {
-    visitor.visit(this);
+void Return::accept() {
+    Visitor::visit(this);
 }
 
-void _T_FunctionCall::accept() {
-    visitor.visit(this);
+void FunctionCall::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Call::accept() {
-    visitor.visit(this);
+void Call::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Int::accept() {
-    visitor.visit(this);
+void Int::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Number::accept() {
-    visitor.visit(this);
+void Number::accept() {
+    Visitor::visit(this);
 }
 
-void _T_CallExp::accept() {
-    visitor.visit(this);
+void CallExp::accept() {
+    Visitor::visit(this);
 }
 
 
-void _T_Exp::accept() {
-    visitor.visit(this);
+void Exp::accept() {
+    Visitor::visit(this);
 }
 
-_T_Type::Type _T_Exp::get_type(_T_Exp *pExp, _T_Exp *pExp1) {
-    if (pExp->type->typeCase == _T_Type::_INT_ || pExp1->type->typeCase == _T_Type::_INT_) {
-        return _T_Type::_INT_;
+Type::TypeCase Exp::get_type(Exp *pExp, Exp *pExp1) {
+    if (pExp->type->typeCase == Type::INT || pExp1->type->typeCase == Type::INT) {
+        return Type::INT;
     }
-    if (pExp->type->typeCase == _T_Type::_BYTE_ || pExp1->type->typeCase == _T_Type::_BYTE_) {
-        return _T_Type::_BYTE_;
+    if (pExp->type->typeCase == Type::BYTE || pExp1->type->typeCase == Type::BYTE) {
+        return Type::BYTE;
     }
     output::errorMismatch(yylineno);
     exit(1);
 }
 
-void _T_Byte::accept() {
-    visitor.visit(this);
+void Byte::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Cast::accept() {
-    visitor.visit(this);
+void Cast::accept() {
+    Visitor::visit(this);
 }
 
-void _T_LogicOp::accept() {
-    visitor.visit(this);
+void LogicOp::accept() {
+    Visitor::visit(this);
 }
 
-void _T_And::accept() {
-    visitor.visit(this);
+void And::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Or::accept() {
-    visitor.visit(this);
+void Or::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Not::accept() {
-    visitor.visit(this);
+void Not::accept() {
+    Visitor::visit(this);
 }
 
-void _T_String::accept() {
-    visitor.visit(this);
+void String::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Trinari::accept() {
-    visitor.visit(this);
+void Trinari::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Bool::accept() {
-    visitor.visit(this);
+void Bool::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Statement::accept() {
-    visitor.visit(this);
+void Statement::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Declaration::accept() {
-    visitor.visit(this);
+void Declaration::accept() {
+    Visitor::visit(this);
 }
 
-void _T_Assignment::accept() {
-    visitor.visit(this);
+void Assignment::accept() {
+    Visitor::visit(this);
 }
 
-void _T_LateAssignment::accept() {
-    visitor.visit(this);
+void LateAssignment::accept() {
+    Visitor::visit(this);
 }

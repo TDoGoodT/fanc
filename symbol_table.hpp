@@ -21,17 +21,17 @@ public:
     int which;
 
     union _node {
-        struct _T_Id *id_node;
-        struct _T_FuncDecl *func_node;
+        struct Id *id_node;
+        struct FuncDecl *func_node;
 
-        explicit _node(struct _T_Id *id_node) : id_node(id_node) {}
+        explicit _node(struct Id *id_node) : id_node(id_node) {}
 
-        explicit _node(struct _T_FuncDecl *func_node) : func_node(func_node) {}
+        explicit _node(struct FuncDecl *func_node) : func_node(func_node) {}
     } node;
 
-    SymbolTableEntry(struct _T_Id *id_node, int offset) : which(0), offset(offset), node(id_node) {}
+    SymbolTableEntry(struct Id *id_node, int offset) : which(0), offset(offset), node(id_node) {}
 
-    SymbolTableEntry(struct _T_FuncDecl *func_node, int offset) : which(1), offset(offset), node(func_node) {}
+    SymbolTableEntry(struct FuncDecl *func_node, int offset) : which(1), offset(offset), node(func_node) {}
 
     string get_id() const {
         if (which == 0) return node.id_node->id;

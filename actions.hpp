@@ -18,13 +18,13 @@ namespace actions {
 
     void end_program(Store *store);
 
-    void insert_id(Store *store, struct _T_Id *id);
+    void insert_id(Store *store, struct Id *id);
 
-    void end_function(Store *store, struct _T_FuncDecl *func);
+    void end_function(Store *store, struct FuncDecl *func);
 
-    void begin_function(Store *store, _T_Type::Type type);
+    void begin_function(Store *store, Type::TypeCase type);
 
-    void insert_function_params(Store *store, struct _T_FormalsList *formals);
+    void insert_function_params(Store *store, struct FormalsList *formals);
 
     void begin_if(Store *store);
 
@@ -34,11 +34,11 @@ namespace actions {
 
     void end_while(Store *store);
 
-    _T_Id *get_id(Store *store, _T_Id *id);
+    Id *get_id(Store *store, Id *id);
 
-    _T_Id *get_func(Store *store, _T_Id *id);
+    Id *get_func(Store *store, Id *id);
 
-    void declare_func(Store *store, _T_Id *func_id);
+    void declare_func(Store *store, Id *func_id);
 }
 
 

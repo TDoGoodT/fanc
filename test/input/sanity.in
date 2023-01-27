@@ -1,14 +1,4 @@
-void printOk(bool isOk) {
-    if (isOk) print("ok");
-}
-
 void main()
 {
-    int x = 4;
-    bool a;
-    bool bas = true;
-    bool c = bas or not false;
-    byte y = 100 b;
-    printOk(x>y);
-    int z;
+    bool x = false or false or false;
 }

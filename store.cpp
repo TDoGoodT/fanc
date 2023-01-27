@@ -5,12 +5,12 @@
 #include <cassert>
 #include "store.hpp"
 
-void Store::begin_function(_T_Type::Type type) {
+void Store::begin_function(Type::TypeCase type) {
     in_func = true;
     func_ret_type = type;
 }
 
-void Store::end_function(struct _T_FuncDecl *func) {
+void Store::end_function(struct FuncDecl *func) {
     in_func = false;
     crr_func_id = nullptr;
     symbol_table_manager.insert_function(func);
@@ -20,7 +20,7 @@ void Store::begin_while() {
     in_while++;
 }
 
-_T_Type::Type Store::get_current_func_ret_type() const {
+Type::TypeCase Store::get_current_func_ret_type() const {
     return func_ret_type;
 }
 
@@ -33,13 +33,13 @@ void Store::end_while() {
     in_while--;
 }
 
-void Store::insert_function_params(struct _T_FormalsList *formals) {
+void Store::insert_function_params(struct FormalsList *formals) {
     crr_func_params = formals;
     symbol_table_manager.insert_function_params(formals);
 }
 
 
-_T_Id *Store::get_id(const string &id) const {
+Id *Store::get_id(const string &id) const {
     auto *entry = symbol_table_manager.get_entry_by_name(id);
     if (entry == nullptr) {
         return nullptr;
@@ -50,11 +50,11 @@ _T_Id *Store::get_id(const string &id) const {
     return entry->node.id_node;
 }
 
-_T_Id *Store::get_id(struct _T_Id *id) const {
+Id *Store::get_id(struct Id *id) const {
     return this->get_id(id->id);
 }
 
-_T_Id *Store::get_func(const string &id) const {
+Id *Store::get_func(const string &id) const {
     if (!crr_func_id) {
         return nullptr;
     }
@@ -71,11 +71,11 @@ _T_Id *Store::get_func(const string &id) const {
     return entry->node.func_node->id;
 }
 
-_T_Id *Store::get_func(_T_Id *pId) const {
+Id *Store::get_func(Id *pId) const {
     return this->get_func(pId->id);
 }
 
-void Store::declare_func(_T_Id *func_id) {
+void Store::declare_func(Id *func_id) {
     assert(in_func);
     crr_func_id = func_id;
 }

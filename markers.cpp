@@ -5,5 +5,17 @@
 #include "markers.hpp"
 
 void InitMarker::accept() {
-    Visitor::instance().visit(this);
+    Visitor::visit(this);
+}
+void EndMarker::accept() {
+    Visitor::visit(this);
+}
+
+void OrMarker::accept() {
+    Visitor::visit(this);
+}
+
+
+void AndMarker::accept() {
+    Visitor::visit(this);
 }

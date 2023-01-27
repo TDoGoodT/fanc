@@ -3,7 +3,9 @@
 - [x] calculations for arithmetics expressions.
   - [x] simple expressions.
   - [x] complex expressions.
-- [ ] calculations for boolean expressions.
+  - [x] division by zero.
+  - [x] mask results when overflow.
+- [x] calculations for boolean expressions.
 - [ ] saving and loading variables in the stack.
 - [ ] sequence of statements.
 - [ ] control flows management.

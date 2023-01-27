@@ -19,18 +19,13 @@ string CodeBuffer::newTemp() {
 }
 
 string CodeBuffer::genLabel() {
-    std::stringstream label;
-    label << "label_";
-    label << buffer.size();
-    std::string ret(label.str());
-    label << ":";
-    emit(label.str());
-    return ret;
+    string label = newLabel();
+    emitLabel(label + ":");
+    return label;
 }
 
 int CodeBuffer::emit(const string &s, bool isGlobal) {
     string new_s = isGlobal ? s : "\t" + s;
-    cout << new_s << endl;
     buffer.push_back(new_s);
     return buffer.size() - 1;
 }
@@ -73,14 +68,17 @@ void CodeBuffer::printGlobalBuffer() {
     }
 }
 
-int CodeBuffer::emitLabel(const char *string) {
-    return emit(string, true);
+int CodeBuffer::emitLabel(const string& str) {
+    return emit(str, true);
 }
 
 int CodeBuffer::getLineNumber() {
     return buffer.size() - 1;
 }
 
+string CodeBuffer::newLabel() {
+    return "label_" + to_string(labelCounter++);
+}
 // ******** Helper Methods ********** //
 bool replace(string &str, const string &from, const string &to, const BranchLabelIndex index) {
     size_t pos;

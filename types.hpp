@@ -9,39 +9,40 @@
 #include <string>
 #include <map>
 #include "bp.hpp"
+#include "markers.hpp"
 
 using namespace std;
 
 
-struct _T_ {
-    _T_() {}
+struct T  {
+    T() {}
 
     virtual void accept() = 0;
 
     string &place = *new string();
 };
 
-struct _Non_T_ : public _T_ {
-    _Non_T_() {}
+struct NonT : public T {
+    NonT() {}
 };
 
-struct _T_Type {
-    enum Type {
-        _INT_, _BOOL_, _STRING_, _VOID_, _BYTE_
+struct Type {
+    enum TypeCase {
+        INT, BOOL, STRING, VOID, BYTE
     } typeCase;
 
-    string to_string();
+    string to_string() const;
 
-    _T_Type(Type type) : typeCase(type) {}
+    Type(TypeCase type) : typeCase(type) {}
 
 };
 
-struct _T_Exp : public _Non_T_ {
+struct Exp : public NonT {
     void accept() override;
 
     bool is_bool = false;
 
-    struct _T_Type *type;
+    struct Type *type;
     int *value = nullptr;
     vector<pair<int, BranchLabelIndex>> nextList;
     vector<pair<int, BranchLabelIndex>> breakList;
@@ -49,286 +50,286 @@ struct _T_Exp : public _Non_T_ {
     vector<pair<int, BranchLabelIndex>> trueList;
     vector<pair<int, BranchLabelIndex>> falseList;
 
-    _T_Exp(struct _T_Type *type) : type(type) {
+    Exp(struct Type *type) : type(type) {
 
     }
 
-    _T_Exp(struct _T_Type *type, int *value) : type(type), value(value) {
+    Exp(struct Type *type, int *value) : type(type), value(value) {
 
     }
 
-    _T_Exp(struct _T_Type *type, int *value, bool in_statement) : type(type), value(value), is_bool(in_statement) {
+    Exp(struct Type *type, int *value, bool in_statement) : type(type), value(value), is_bool(in_statement) {
 
     }
 
-    static _T_Type::Type get_type(_T_Exp *pExp, _T_Exp *pExp1);
+    static Type::TypeCase get_type(Exp *pExp, Exp *pExp1);
 };
 
 
 
-struct _T_ExpList : public _Non_T_ {
+struct ExpList : public NonT {
     void accept() override {}
 
-    vector<struct _T_Exp *> exp_list;
+    vector<struct Exp *> exp_list;
 
-    _T_ExpList() {}
+    ExpList() {}
 
-    _T_ExpList(struct _T_Exp *exp) { exp_list.push_back(exp); }
+    ExpList(struct Exp *exp) { exp_list.push_back(exp); }
 };
 
 
 
-struct _T_Id : public _T_Exp {
+struct Id : public Exp {
     void accept() override {}
 
     string id;
 
-    _T_Id(string id, struct _T_Type *type) : id(id), _T_Exp(type) {}
+    Id(string id, struct Type *type) : id(id), Exp(type) {}
 };
 
-struct _T_CallExp : public _T_Exp {
+struct CallExp : public Exp {
     void accept() override;
 
-    struct _T_Id *function;
-    struct _T_ExpList *args;
+    struct Id *function;
+    struct ExpList *args;
 
-    _T_CallExp(struct _T_Id *function) : _T_Exp(function->type), function(function) {}
+    CallExp(struct Id *function) : Exp(function->type), function(function) {}
 
-    _T_CallExp(struct _T_Id *function, struct _T_ExpList *args) : _T_Exp(function->type), function(function),
+    CallExp(struct Id *function, struct ExpList *args) : Exp(function->type), function(function),
                                                                   args(args) {}
 };
 
-struct _T_Number : public _T_Exp {
+struct Number : public Exp {
     void accept() override;
 
-    _T_Number(int *value, struct _T_Type *type) : _T_Exp(type, value) {}
+    Number(int *value, struct Type *type) : Exp(type, value) {}
 };
 
-struct _T_Int : public _T_Number {
+struct Int : public Number {
     void accept() override;
 
-    _T_Int(int *value) : _T_Number(value, new _T_Type(_T_Type::_INT_)) {}
+    Int(int *value) : Number(value, new Type(Type::INT)) {}
 };
 
-struct _T_Byte : public _T_Number {
+struct Byte : public Number {
     void accept() override;
 
-    _T_Byte(int *value) : _T_Number(value, new _T_Type(_T_Type::_BYTE_)) {}
+    Byte(int *value) : Number(value, new Type(Type::BYTE)) {}
 };
 
-struct _T_Cast : public _T_Exp {
+struct Cast : public Exp {
     void accept() override;
 
-    struct _T_Type *toType;
-    struct _T_Exp *exp;
+    struct Type *toType;
+    struct Exp *exp;
 
-    _T_Cast(struct _T_Type *toType, struct _T_Exp *exp) : toType(toType), exp(exp), _T_Exp(toType) {}
+    Cast(struct Type *toType, struct Exp *exp) : toType(toType), exp(exp), Exp(toType) {}
 };
 
-struct _T_LogicOp : public _T_Exp {
+struct LogicOp : public Exp {
     void accept() override;
 
-    struct _T_Exp *r_value;
-    struct _T_Exp *l_value;
+    struct Exp *rExp;
+    struct Exp *lExp;
 
-    _T_LogicOp(struct _T_Exp *r_value, struct _T_Exp *l_value) : r_value(r_value), l_value(l_value),
-                                                                 _T_Exp(new _T_Type(_T_Type::_BOOL_)) {}
+    LogicOp(struct Exp *r_value, struct Exp *l_value) : rExp(r_value), lExp(l_value),
+                                                           Exp(new Type(Type::BOOL)) {}
 };
 
-struct _T_And : public _T_LogicOp {
+struct And : public LogicOp {
     void accept() override;
-
-    _T_And(struct _T_Exp *r_value, struct _T_Exp *l_value) : _T_LogicOp(r_value, l_value) {}
+    struct AndMarker* andMarker;
+    And(struct Exp *r_value, struct Exp *l_value, struct AndMarker* andMarker) : LogicOp(r_value, l_value), andMarker(std::move(andMarker)) {}
 };
 
-struct _T_Or : public _T_LogicOp {
+struct Or : public LogicOp {
     void accept() override;
-
-    _T_Or(struct _T_Exp *r_value, struct _T_Exp *l_value) : _T_LogicOp(r_value, l_value) {}
+    struct OrMarker*   orMarker;
+    Or(struct Exp *r_value, struct Exp *l_value, struct OrMarker* orMarker) : LogicOp(r_value, l_value), orMarker(std::move(orMarker)) {}
 };
 
-struct _T_Not : public _T_Exp {
+struct Not : public Exp {
     void accept() override;
 
-    struct _T_Exp *value;
+    struct Exp *exp;
 
-    _T_Not(struct _T_Exp *value) : value(value), _T_Exp(new _T_Type(_T_Type::_BOOL_)) {}
+    Not(struct Exp *value) : exp(value), Exp(new Type(Type::BOOL)) {}
 };
-
-struct _T_Binop : public _T_Exp {
+enum BinopCase {
+    _PLUS_, _MINUS_, _MULT_, _DIV_
+};
+struct Binop : public Exp {
     void accept() override;
 
-    enum BinopCase {
-        _PLUS_, _MINUS_, _MULT_, _DIV_
-    } binopCase;
-    struct _T_Exp *r_exp;
-    struct _T_Exp *l_exp;
+    enum BinopCase binopCase;
+    struct Exp *rExp;
+    struct Exp *lExp;
 
-    _T_Binop(struct _T_Exp *l_exp, struct _T_Exp *r_exp, BinopCase binopCase) : r_exp(r_exp), l_exp(l_exp),
-                                                                                binopCase(binopCase),
-                                                                                _T_Exp(new _T_Type(
+    Binop(struct Exp *l_exp, struct Exp *r_exp, BinopCase binopCase) : rExp(r_exp), lExp(l_exp),
+                                                                          binopCase(binopCase),
+                                                                          Exp(new Type(
                                                                                         get_type(r_exp,
                                                                                                  l_exp))) {};
 
-    _T_Binop(struct _T_Exp *l_exp, struct _T_Exp *r_exp, struct _T_Type *type) : r_exp(r_exp), l_exp(l_exp),
-                                                                                 _T_Exp(type) {}
+    Binop(struct Exp *l_exp, struct Exp *r_exp, struct Type *type) : rExp(r_exp), lExp(l_exp),
+                                                                           Exp(type) {}
 
-    bool is_legal(int line);
+    bool is_legal(int line) const;
 };
 
 enum RelopCase {
-    _GT_, _GE_, _LT_, _LE_, _EQ_, _NE_
+    GT_, GE_, LT_, LE_, EQ_, NE_
 };
 
-struct _T_Relop : public _T_Exp {
+struct Relop : public Exp {
     void accept() override;
 
-    struct _T_Exp *rExp;
-    struct _T_Exp *lExp;
+    struct Exp *rExp;
+    struct Exp *lExp;
     RelopCase relopCase;
 
-    _T_Relop(struct _T_Exp *l_exp, struct _T_Exp *r_exp, RelopCase relopCase) : rExp(r_exp), lExp(l_exp),
-                                                                                _T_Exp(new _T_Type(_T_Type::_BOOL_)),
-                                                                                relopCase(relopCase) {}
+    Relop(struct Exp *l_exp, struct Exp *r_exp, RelopCase relopCase) : rExp(r_exp), lExp(l_exp),
+                                                                          Exp(new Type(Type::BOOL)),
+                                                                          relopCase(relopCase) {}
 
-    bool is_legal(int line);
+    bool is_legal(int line) const;
 };
 
 
-struct _T_String : public _T_Exp {
+struct String : public Exp {
     void accept() override;
 
     string value;
 
-    explicit _T_String(string value) : _T_Exp(new _T_Type(_T_Type::_STRING_)), value(value) {}
+    explicit String(string value) : Exp(new Type(Type::STRING)), value(value) {}
 };
 
-struct _T_Trinari : public _T_Exp {
+struct Trinari : public Exp {
     void accept() override;
 
-    struct _T_Exp *true_exp;
-    struct _T_Exp *cond_exp;
-    struct _T_Exp *false_exp;
+    struct Exp *true_exp;
+    struct Exp *cond_exp;
+    struct Exp *false_exp;
 
-    _T_Trinari(struct _T_Exp *true_exp, struct _T_Exp *cond_exp, struct _T_Exp *false_exp) : true_exp(true_exp),
-                                                                                             cond_exp(cond_exp),
-                                                                                             false_exp(false_exp),
-                                                                                             _T_Exp(true_exp->type) {}
+    Trinari(struct Exp *true_exp, struct Exp *cond_exp, struct Exp *false_exp) : true_exp(true_exp),
+                                                                                    cond_exp(cond_exp),
+                                                                                    false_exp(false_exp),
+                                                                                    Exp(true_exp->type) {}
 };
 
-struct _T_Bool : public _T_Exp {
+struct Bool : public Exp {
     void accept() override;
 
     // rule 2
     bool value;
 
-    explicit _T_Bool(bool value) : _T_Exp(new _T_Type(_T_Type::_BOOL_)), value(value) {}
+    explicit Bool(bool value) : Exp(new Type(Type::BOOL)), value(value) {}
 };
 
-struct _T_Statement : public _Non_T_ {
+struct Statement : public NonT {
     void accept() override;
 
-    _T_Statement() = default;
+    Statement() = default;
 };
 
 
 
-struct _T_Declaration : public _T_Statement {
+struct Declaration : public Statement {
     void accept() override;
 
-    struct _T_Type *type;
-    struct _T_Id *id;
+    struct Type *type;
+    struct Id *id;
 
-    _T_Declaration(struct _T_Type *type, struct _T_Id *id) : type(type), id(id) {}
+    Declaration(struct Type *type, struct Id *id) : type(type), id(id) {}
 };
 
-struct _T_Assignment : public _T_Statement {
+struct Assignment : public Statement {
     void accept() override;
 
-    struct _T_Type *type;
-    struct _T_Id *id;
-    struct _T_Exp *value;
+    struct Type *type;
+    struct Id *id;
+    struct Exp *value;
 
-    _T_Assignment(struct _T_Type *type, struct _T_Id *id, struct _T_Exp *value) : type(type), id(id),
-                                                                                  value(value) {}
+    Assignment(struct Type *type, struct Id *id, struct Exp *value) : type(type), id(id),
+                                                                               value(value) {}
 };
 
-struct _T_LateAssignment : public _T_Statement {
+struct LateAssignment : public Statement {
     void accept() override;
 
-    struct _T_Id *id;
-    struct _T_Exp *value;
+    struct Id *id;
+    struct Exp *value;
 
-    _T_LateAssignment(struct _T_Id *id, struct _T_Exp *value) : id(id), value(value) {}
+    LateAssignment(struct Id *id, struct Exp *value) : id(id), value(value) {}
 };
 
-struct _T_Call : public _T_Statement {
+struct Call : public Statement {
     void accept() override;
 
-    struct _T_CallExp *callExp;
+    struct CallExp *callExp;
 
-    _T_Call(struct _T_CallExp *callExp) : callExp(callExp) {}
+    Call(struct CallExp *callExp) : callExp(callExp) {}
 };
 
-struct _T_FunctionCall : public _T_Statement {
+struct FunctionCall : public Statement {
     void accept() override;
 
-    struct _T_Id *function_id;
-    struct _T_ExpList *args;
+    struct Id *function_id;
+    struct ExpList *args;
 
-    _T_FunctionCall(struct _T_Call *call) : function_id(call->callExp->function),
+    FunctionCall(struct Call *call) : function_id(call->callExp->function),
                                             args(call->callExp->args) {}
 
-    _T_FunctionCall(struct _T_Id *function_id, struct _T_ExpList *args) : function_id(function_id),
+    FunctionCall(struct Id *function_id, struct ExpList *args) : function_id(function_id),
                                                                           args(args) {}
 };
 
-struct _T_Return : public _T_Statement {
+struct Return : public Statement {
     void accept() override;
 
-    struct _T_Exp *value;
+    struct Exp *value;
 
-    _T_Return() : value(nullptr) {}
+    Return() : value(nullptr) {}
 
-    _T_Return(struct _T_Exp *value) : value(value) {}
+    Return(struct Exp *value) : value(value) {}
 };
 
 
-struct _T_If_pattern : public _T_Statement {
+struct If_pattern : public Statement {
     void accept() override;
 
-    struct _T_Exp *condition;
-    struct _T_Statement *true_stmnt;
-    struct _T_Statement *false_stmnt;
+    struct Exp *condition;
+    struct Statement *true_stmnt;
+    struct Statement *false_stmnt;
 
-    _T_If_pattern(struct _T_Exp *condition, struct _T_Statement *stmnt) : condition(condition),
-                                                                          true_stmnt(stmnt) {}
+    If_pattern(struct Exp *condition, struct Statement *stmnt) : condition(condition),
+                                                                       true_stmnt(stmnt) {}
 
-    _T_If_pattern(struct _T_Exp *condition, struct _T_Statement *true_stmnt, struct _T_Statement *false_stmnt)
+    If_pattern(struct Exp *condition, struct Statement *true_stmnt, struct Statement *false_stmnt)
             : condition(condition), true_stmnt(true_stmnt), false_stmnt(false_stmnt) {}
 };
 
-struct _T_While : public _T_Statement {
+struct While : public Statement {
     void accept() override;
 
-    struct _T_Exp *condition;
-    struct _T_Statement *stmnt;
+    struct Exp *condition;
+    struct Statement *stmnt;
 
-    _T_While(struct _T_Exp *condition, struct _T_Statement *stmnt) : condition(condition), stmnt(stmnt) {}
+    While(struct Exp *condition, struct Statement *stmnt) : condition(condition), stmnt(stmnt) {}
 };
-struct _T_Statements : public _T_Statement {
+struct Statements : public Statement {
     void accept() override;
 
-    vector<struct _T_Statement *> statement_list;
+    vector<struct Statement *> statement_list;
 
-    _T_Statements() = default;
+    Statements() = default;
 
-    _T_Statements(struct _T_Statement *stmnt1) {
+    Statements(struct Statement *stmnt1) {
         statement_list.push_back(stmnt1);
 
     }
 
-    _T_Statements(struct _T_Statement *stmnt1, struct _T_Statement *stmnt2) {
+    Statements(struct Statement *stmnt1, struct Statement *stmnt2) {
         statement_list.push_back(stmnt1);
         statement_list.push_back(stmnt2);
 
@@ -337,106 +338,106 @@ struct _T_Statements : public _T_Statement {
 };
 
 
-struct _T_RetType : public _Non_T_ {
+struct RetType : public NonT {
     void accept() override;
 
-    struct _T_Type *type;
+    struct Type *type;
 
-    _T_RetType(_T_Type::Type type) : type(new _T_Type(type)) {}
+    RetType(Type::TypeCase type) : type(new Type(type)) {}
 
-    _T_RetType(struct _T_Type *type) : type(type) {}
+    RetType(struct Type *type) : type(type) {}
 
-    string to_string();
+    string to_string() const;
 };
 
 
 
 
 
-struct _T_FormalDecl : public _Non_T_ {
+struct FormalDecl : public NonT {
     void accept() override;
 
-    struct _T_Id *id;
+    struct Id *id;
 
-    _T_FormalDecl(struct _T_Id *id) : id(id) {}
+    FormalDecl(struct Id *id) : id(id) {}
 };
 
-struct _T_FormalsList : public _Non_T_ {
+struct FormalsList : public NonT {
     void accept() override;
 
-    vector<struct _T_FormalDecl *> formal_list;
+    vector<struct FormalDecl *> formalList;
 
-    _T_FormalsList() {}
+    FormalsList() {}
 
-    _T_FormalsList(struct _T_FormalDecl *formal) : formal_list({formal}) {}
-};
-
-
-struct _T_Formals : public _Non_T_ {
-    void accept() override;
-
-    struct _T_FormalsList *formal_list;
-
-    _T_Formals() : formal_list(new _T_FormalsList()) {}
-
-    _T_Formals(struct _T_FormalsList *formal_list) : formal_list(formal_list) {}
-
-    vector<string> to_strings();
+    FormalsList(struct FormalDecl *formal) : formalList({formal}) {}
 };
 
 
-
-
-struct _T_FuncDecl : public _Non_T_ {
+struct Formals : public NonT {
     void accept() override;
 
-    struct _T_Id *id;
-    struct _T_Formals *formals;
-    struct _T_Statements *stmts;
+    struct FormalsList *formal_list;
 
-    _T_FuncDecl(struct _T_Id *id, struct _T_Formals *formals) : id(id), formals(formals) {}
+    Formals() : formal_list(new FormalsList()) {}
 
-    _T_FuncDecl(struct _T_Id *id, struct _T_Formals *formals, struct _T_Statements *stmts) : id(id), formals(formals),
-                                                                                             stmts(stmts) {}
+    Formals(struct FormalsList *formal_list) : formal_list(formal_list) {}
 
-    string get_name();
-};
-
-
-
-struct _T_Funcs : public _Non_T_ {
-    void accept() override;
-
-    vector<struct _T_FuncDecl *> func_list;
-
-    _T_Funcs() {}
-};
-
-
-
-struct _T_Program : public _Non_T_ {
-    _T_Program(struct _T_Funcs *funcs) : funcs(funcs) {}
-
-    void accept() override;
-
-    struct _T_Funcs *funcs;
-
+    vector<string> to_strings() const;
 };
 
 
 
 
-struct _T_Break : public _T_Statement {
+struct FuncDecl : public NonT {
     void accept() override;
 
-    _T_Break() {}
+    struct Id *id;
+    struct Formals *formals;
+    struct Statements *stmts;
+
+    FuncDecl(struct Id *id, struct Formals *formals) : id(id), formals(formals) {}
+
+    FuncDecl(struct Id *id, struct Formals *formals, struct Statements *stmts) : id(id), formals(formals),
+                                                                                          stmts(stmts) {}
+
+    string get_name() const;
 };
 
 
-struct _T_Continue : public _T_Statement {
+
+struct Funcs : public NonT {
     void accept() override;
 
-    _T_Continue() {}
+    vector<struct FuncDecl *> func_list;
+
+    Funcs() {}
+};
+
+
+
+struct Program : public NonT {
+    Program(struct Funcs *funcs) : funcs(funcs) {}
+
+    void accept() override;
+
+    struct Funcs *funcs;
+
+};
+
+
+
+
+struct Break : public Statement {
+    void accept() override;
+
+    Break() {}
+};
+
+
+struct Continue : public Statement {
+    void accept() override;
+
+    Continue() {}
 };
 
 

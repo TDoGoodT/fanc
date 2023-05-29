@@ -91,20 +91,20 @@ bool validations::has_value(struct Exp *exp) {
 
 
 bool validations::is_bool(struct Exp *exp) {
-    return exp->type->typeCase == Type::BOOL;
+    return exp->type->typeCase == Type::BOOL_;
 }
 
 bool validations::is_castable(Type::TypeCase fromType, Type::TypeCase toTypeCase, bool explicit_cast) {
     if (fromType == toTypeCase) {
         return true;
     }
-    if (fromType == Type::TypeCase::BYTE && toTypeCase == Type::TypeCase::INT) {
+    if (fromType == Type::BYTE_ && toTypeCase == Type::INT_) {
         return true;
     }
     if (!explicit_cast) {
         return false;
     }
-    if (toTypeCase == Type::BYTE && fromType == Type::INT) {
+    if (toTypeCase == Type::BYTE_ && fromType == Type::INT_) {
         return true;
     }
     return false;

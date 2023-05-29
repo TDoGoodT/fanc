@@ -3,6 +3,7 @@
 //
 
 #include "markers.hpp"
+#include "visitor.hpp"
 
 void InitMarker::accept() {
     Visitor::visit(this);

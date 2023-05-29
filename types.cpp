@@ -5,7 +5,6 @@
 #include "hw3_output.hpp"
 #include "visitor.hpp"
 #include <vector>
-#include <string>
 
 using namespace std;
 using namespace output;
@@ -41,11 +40,11 @@ void RetType::accept() {
 }
 
 std::map<Type::TypeCase, std::string> type_to_name{
-        {Type::TypeCase::INT,    "i32"},
-        {Type::TypeCase::BOOL,   "i1"},
-        {Type::TypeCase::STRING, "STRING"},
-        {Type::TypeCase::VOID,   "VOID"},
-        {Type::TypeCase::BYTE, "i8"}
+        {Type::INT_,    "i32"},
+        {Type::BOOL_,   "i1"},
+        {Type::STRING_, "STRING"},
+        {Type::VOID_,   "VOID"},
+        {Type::BYTE_, "i8"}
 };
 
 string Type::to_string() const {
@@ -53,7 +52,7 @@ string Type::to_string() const {
 }
 
 bool is_numeric(Type::TypeCase type) {
-    return type == Type::TypeCase::INT || type == Type::TypeCase::BYTE;
+    return type == Type::INT_ || type == Type::BYTE_;
 }
 
 bool Relop::is_legal(int line) const {
@@ -174,11 +173,11 @@ void Exp::accept() {
 }
 
 Type::TypeCase Exp::get_type(Exp *pExp, Exp *pExp1) {
-    if (pExp->type->typeCase == Type::INT || pExp1->type->typeCase == Type::INT) {
-        return Type::INT;
+    if (pExp->type->typeCase == Type::INT_ || pExp1->type->typeCase == Type::INT_) {
+        return Type::INT_;
     }
-    if (pExp->type->typeCase == Type::BYTE || pExp1->type->typeCase == Type::BYTE) {
-        return Type::BYTE;
+    if (pExp->type->typeCase == Type::BYTE_ || pExp1->type->typeCase == Type::BYTE_) {
+        return Type::BYTE_;
     }
     output::errorMismatch(yylineno);
     exit(1);

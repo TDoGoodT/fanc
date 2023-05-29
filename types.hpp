@@ -27,7 +27,7 @@ struct NonT : public T {
 
 struct Type {
     enum TypeCase {
-        INT, BOOL, STRING, VOID, BYTE
+        INT_, BOOL_, STRING_, VOID_, BYTE_
     } typeCase;
 
     string to_string() const;
@@ -106,13 +106,13 @@ struct Number : public Exp {
 struct Int : public Number {
     void accept() override;
 
-    Int(int *value) : Number(value, new Type(Type::INT)) {}
+    Int(int *value) : Number(value, new Type(Type::INT_)) {}
 };
 
 struct Byte : public Number {
     void accept() override;
 
-    Byte(int *value) : Number(value, new Type(Type::BYTE)) {}
+    Byte(int *value) : Number(value, new Type(Type::BYTE_)) {}
 };
 
 struct Cast : public Exp {
@@ -131,7 +131,7 @@ struct LogicOp : public Exp {
     struct Exp *lExp;
 
     LogicOp(struct Exp *r_value, struct Exp *l_value) : rExp(r_value), lExp(l_value),
-                                                           Exp(new Type(Type::BOOL)) {}
+                                                           Exp(new Type(Type::BOOL_)) {}
 };
 
 struct And : public LogicOp {
@@ -151,7 +151,7 @@ struct Not : public Exp {
 
     struct Exp *exp;
 
-    Not(struct Exp *value) : exp(value), Exp(new Type(Type::BOOL)) {}
+    Not(struct Exp *value) : exp(value), Exp(new Type(Type::BOOL_)) {}
 };
 enum BinopCase {
     _PLUS_, _MINUS_, _MULT_, _DIV_
@@ -187,7 +187,7 @@ struct Relop : public Exp {
     RelopCase relopCase;
 
     Relop(struct Exp *l_exp, struct Exp *r_exp, RelopCase relopCase) : rExp(r_exp), lExp(l_exp),
-                                                                          Exp(new Type(Type::BOOL)),
+                                                                          Exp(new Type(Type::BOOL_)),
                                                                           relopCase(relopCase) {}
 
     bool is_legal(int line) const;
@@ -199,7 +199,7 @@ struct String : public Exp {
 
     string value;
 
-    explicit String(string value) : Exp(new Type(Type::STRING)), value(value) {}
+    explicit String(string value) : Exp(new Type(Type::STRING_)), value(value) {}
 };
 
 struct Trinari : public Exp {
@@ -221,7 +221,7 @@ struct Bool : public Exp {
     // rule 2
     bool *value;
 
-    explicit Bool(bool *value) : Exp(new Type(Type::BOOL)), value(value) {}
+    explicit Bool(bool *value) : Exp(new Type(Type::BOOL_)), value(value) {}
 };
 
 struct Statement : public NonT {

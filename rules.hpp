@@ -306,7 +306,7 @@ FunctionCall* MakeFunctionCall(struct Id *function_id, struct ExpList *args) {
 }
 
 Return* MakeReturn() {
-    if(store.get_current_func_ret_type() != Type::VOID) {
+    if(store.get_current_func_ret_type() != Type::VOID_) {
         errorMismatch(yylineno);
         exit(1);
     }

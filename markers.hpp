@@ -4,9 +4,7 @@
 
 #ifndef ANALYZER_MARKERS_HPP
 #define ANALYZER_MARKERS_HPP
-
-#include "visitor.hpp"
-
+#include <string>
 struct Marker {
     virtual void accept() = 0;
 };
@@ -22,13 +20,13 @@ struct EndMarker : public Marker {
 };
 
 struct OrMarker : public Marker {
-    string label;
+    std::string label;
     void accept() override;
     OrMarker() = default;
 };
 
 struct AndMarker : public Marker {
-    string label;
+    std::string label;
     void accept() override ;
     AndMarker() = default;
 };

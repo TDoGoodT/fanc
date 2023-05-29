@@ -6,7 +6,7 @@ flex-scanner:
 	mv lex.yy.c lex.yy.cpp
 
 bison-analyzer:
-	bison -Wcounterexamples -d	analyzer.ypp.txt -o analyzer.tab.cpp
+	bison  -d	analyzer.ypp.txt -o analyzer.tab.cpp
 	#bison  -d	analyzer.ypp -o analyzer.tab.cpp
 
 pre-build: bison-analyzer flex-scanner

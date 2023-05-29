@@ -68,7 +68,7 @@ void SymbolTableManager::insert_function(struct FuncDecl *func) {
     symbol_table_stack.back()->entries_vector.push_back(entry);
 }
 static struct FuncDecl *createFuncDecl(string name, Type::TypeCase type) {
-    auto func_id = new Id(std::move(name), new Type(Type::VOID));
+    auto func_id = new Id(std::move(name), new Type(Type::VOID_));
     auto inputs_decl = vector<FormalDecl *>();
     auto input_id = new Id("input", new Type(type));
     auto input_decl = new FormalDecl(input_id);
@@ -78,8 +78,8 @@ static struct FuncDecl *createFuncDecl(string name, Type::TypeCase type) {
 }
 
 void SymbolTableManager::add_print_functions() {
-    insert_function(createFuncDecl("print", Type::STRING));
-    insert_function(createFuncDecl("printi", Type::INT));
+    insert_function(createFuncDecl("print", Type::STRING_));
+    insert_function(createFuncDecl("printi", Type::INT_));
 }
 
 

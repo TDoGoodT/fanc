@@ -135,7 +135,7 @@ retType:
 type
 {debug(); $$ = MakeRetType($1); }
 | void
-{debug(); $$ = MakeRetType(Type::VOID); }
+{debug(); $$ = MakeRetType(Type::VOID_); }
 ;
 formals:
 epsilon
@@ -316,22 +316,22 @@ STRING
 
 void:
 VOID
-{debug(); $$ = MakeType(Type::VOID); }
+{debug(); $$ = MakeType(Type::VOID_); }
 ;
 
 int:
 INT
-{debug(); $$ = MakeType(Type::INT); }
+{debug(); $$ = MakeType(Type::INT_); }
 ;
 
 byte:
 BYTE
-{debug(); $$ = MakeType(Type::BYTE); }
+{debug(); $$ = MakeType(Type::BYTE_); }
 ;
 
 bool:
 BOOL
-{debug(); $$ = MakeType(Type::BOOL); }
+{debug(); $$ = MakeType(Type::BOOL_); }
 ;
 
 false:

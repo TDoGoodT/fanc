@@ -11,14 +11,14 @@ CodeBuffer &codeBuffer = CodeBuffer::instance();
 
 string to_string(Type *pType) {
     switch (pType->typeCase) {
-        case Type::INT:
+        case Type::INT_:
             return " i32 ";
-        case Type::BOOL:
+        case Type::BOOL_:
             return " i1 ";
-        case Type::BYTE:
+        case Type::BYTE_:
             return " i8 ";
-        case Type::STRING:
-        case Type::VOID:
+        case Type::STRING_:
+        case Type::VOID_:
             assert(false);
     }
     exit(0);
@@ -52,12 +52,12 @@ void Visitor::visit(Binop *element) {
         codeBuffer.emit("call void @exit(i32 0)");
         codeBuffer.emit("br label @");
     }
-    if (element->type->typeCase != Type::BYTE) {
+    if (element->type->typeCase != Type::BYTE_) {
         codeBuffer.emit("%"+element->place + " = " + opStr + to_string(element->type) + "%"+lStr + ", %" + rStr);
         return;
     }
     string maskedVar = codeBuffer.newTemp();
-    if (element->rExp->type->typeCase == Type::INT) {
+    if (element->rExp->type->typeCase == Type::INT_) {
         codeBuffer.emit(maskedVar + " = and i32 " + rStr + ", 255");
         rStr = maskedVar;
     }
@@ -86,7 +86,7 @@ void Visitor::visit(Number *element) {
 
 void Visitor::visit(Int *element) {
     element->place = codeBuffer.newTemp();
-    assert(element->type->typeCase == Type::INT);
+    assert(element->type->typeCase == Type::INT_);
     codeBuffer.emit("%" + element->place + " = "
                     + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " + to_string(*element->value) +
                     ", 0; visited Int " + to_string(*element->value));
@@ -94,7 +94,7 @@ void Visitor::visit(Int *element) {
 
 void Visitor::visit(Byte *element) {
     element->place = codeBuffer.newTemp();
-    assert(element->type->typeCase == Type::BYTE);
+    assert(element->type->typeCase == Type::BYTE_);
     codeBuffer.emit("%" + element->place + " = " + getLlvmBinOp(BinopCase::_PLUS_) + to_string(element->type) + " " +
                     to_string(*element->value) + ", 0; visited Byte " + to_string(*element->value));
 }
@@ -106,7 +106,7 @@ void Visitor::visit(Declaration *element) {
 }
 
 void Visitor::visit(Assignment *element) {
-    if (element->value->type->typeCase == Type::BOOL) {
+    if (element->value->type->typeCase == Type::BOOL_) {
         handleBoolAssignment(element->value);
     }
     element->id->place = codeBuffer.newVar();
@@ -133,7 +133,7 @@ void Visitor::handleBoolAssignment(struct Exp *value) {
 }
 
 void Visitor::visit(LateAssignment *element) {
-    if (element->value->type->typeCase == Type::BOOL) {
+    if (element->value->type->typeCase == Type::BOOL_) {
         handleBoolAssignment(element->value);
     }
     string valuePlace = getValuePlace(element->value);
@@ -224,7 +224,7 @@ string Visitor::getLlvmRelop(struct Relop *relop) {
 
 
 void Visitor::visit(Bool *element) {
-    assert(element->type->typeCase == Type::BOOL);
+    assert(element->type->typeCase == Type::BOOL_);
     codeBuffer.emit("br label @; visited Bool " + to_string(*element->value));
     if (*element->value) element->trueList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});
     else element->falseList = CodeBuffer::makelist({codeBuffer.getLineNumber(), FIRST});

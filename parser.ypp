@@ -1,0 +1,226 @@
+%{
+#include <iostream>
+#include <cstdlib>
+#include <vector>
+#include "nodes.hpp"
+#include "visitor.hpp"
+#include "tokens.hpp"
+#include "parser.tab.hpp"
+#include "bp.hpp"
+#include "hw3_output.hpp"
+#define DEBUG 0
+#define ACCEPT(node) do { \
+    auto root = node; \
+    if(DEBUG) { \
+        root.accept(echo_visitor); \
+    } \
+    root.accept(types_visitor); \
+    root.accept(validation_visitor); \
+    root.accept(symbol_table_visitor); \
+    root.accept(scope_visitor); \
+    root.accept(code_gen_visitor); \
+} while(0)
+
+#define ALLOCATE_AND_ACCEPT(root, node) do { \
+    root = new node; \
+    if(DEBUG) { \
+        root->accept(echo_visitor); \
+    } \
+    root->accept(types_visitor); \
+    root->accept(validation_visitor); \
+    root->accept(symbol_table_visitor); \
+    root->accept(scope_visitor); \
+    root->accept(code_gen_visitor); \
+} while(0)
+
+extern int yylex();
+extern int yyparse();
+extern int yylineno;
+
+void yyerror(const char* s);
+
+SymbolTable symbol_table;
+WhileContext while_context;
+CodeBuffer buffer;
+ProgramNode* root;
+EchoVisitor echo_visitor;
+TypesVisitor types_visitor(symbol_table);
+ValidationVisitor validation_visitor(symbol_table, while_context);
+SymbolTableVisitor symbol_table_visitor(symbol_table);
+ScopeVisitor scope_visitor(symbol_table, while_context);
+CodeGenVisitor code_gen_visitor(symbol_table, buffer);
+%}
+%union {
+    char* str;
+    bool b;
+    int type;
+    ProgramNode* program_node;
+    OverrideNode* override_node;
+    FuncsNode* funcs_node;
+    FuncDeclNode* func_decl_node;
+    RetTypeNode* ret_type_node;
+    FormalsNode* formals_node;
+    FormalListNode* formal_list_node;
+    FormalDeclNode* formal_decl_node;
+    StatementsNode* statements_node;
+    StatementNode* statement_node;
+    CallNode* call_node;
+    ExprListNode* expr_list_node;
+    BoolExprNode* bool_expr;
+    TypeNode* type_node;
+    ExprNode* expr_node;
+    FuncIdNode* func_id_node;
+    MMarkerNode* m_marker;
+    NMarkerNode* n_marker;
+}
+%token <str> SC OVERRIDE RETURN IF ELSE WHILE BREAK CONTINUE LPAREN RPAREN LBRACE RBRACE ASSIGN COMMA BINOP_2 BINOP_1 RELOP AND OR NOT B
+%token <type> INT BYTE BOOL VOID
+%token <b> TRUE FALSE
+%token <str> STRING <str> ID
+%token <str> NUM
+
+%left OR
+%left AND
+%left RELOP
+%left BINOP_2
+%left BINOP_1
+%left NOT
+%nonassoc LPAREN RPAREN
+%nonassoc ELSE
+
+%type <str> lbrace
+%type <override_node> override
+%type <program_node> program
+%type <funcs_node> funcs
+%type <func_decl_node> funcDecl
+%type <ret_type_node> retType
+%type <formals_node> formals
+%type <formal_list_node> formalList
+%type <formal_decl_node> formalDecl
+%type <statements_node> statements
+%type <statement_node> statement
+%type <call_node> call
+%type <expr_list_node> exprList
+%type <type_node> type
+%type <expr_node> expr
+%type <func_id_node> funcId
+%type <bool_expr> boolExpr
+%type <m_marker> mMarker
+%type <n_marker> nMarker
+
+%start program
+
+%%
+program: funcs { ALLOCATE_AND_ACCEPT(root, ProgramNode($1)); }
+        ;
+
+funcs: empty { ALLOCATE_AND_ACCEPT($$, FuncsNode()); }
+     | funcDecl funcs { ALLOCATE_AND_ACCEPT($$, FuncsNode($1, $2)); }
+     ;
+
+funcDecl: override retType funcId LPAREN formals RPAREN LBRACE statements RBRACE { ALLOCATE_AND_ACCEPT($$, FuncDeclNode($1, $2, $3, $5, $8)); }
+        ;
+
+funcId: ID { ALLOCATE_AND_ACCEPT($$, FuncIdNode($1)); }
+       ;
+
+override: empty { ALLOCATE_AND_ACCEPT($$, OverrideNode(false)); }
+        | OVERRIDE { ALLOCATE_AND_ACCEPT($$, OverrideNode(true)); }
+        ;
+
+retType: type { ALLOCATE_AND_ACCEPT($$, RetTypeNode($1)); }
+       | VOID { ALLOCATE_AND_ACCEPT($$, RetTypeNode(Types::VOID_T)); }
+       ;
+
+formals: empty { ALLOCATE_AND_ACCEPT($$, FormalsNode()); }
+        | formalList { ALLOCATE_AND_ACCEPT($$, FormalsNode($1)); }
+        ;
+
+formalList: formalDecl { ALLOCATE_AND_ACCEPT($$, FormalListNode($1)); }
+           | formalDecl COMMA formalList { ALLOCATE_AND_ACCEPT($$, FormalListNode($1, $3)); }
+           ;
+
+formalDecl: type ID { ALLOCATE_AND_ACCEPT($$, FormalDeclNode($1, $2)); }
+           ;
+
+statements: statement { ALLOCATE_AND_ACCEPT($$, StatementsNode($1)); }
+          | statements mMarker statement { ALLOCATE_AND_ACCEPT($$, StatementsNode($1, $2, $3)); }
+          ;
+
+statement: lbrace statements RBRACE { ALLOCATE_AND_ACCEPT($$, BlockNode($2)); }
+         | type ID SC { ALLOCATE_AND_ACCEPT($$, VarDeclNode($1, $2)); }
+         | type ID ASSIGN expr SC { ALLOCATE_AND_ACCEPT($$, VarDeclNode($1, $2, $4)); }
+         | ID ASSIGN expr SC { ALLOCATE_AND_ACCEPT($$, AssignNode($1, $3)); }
+         | call SC { ALLOCATE_AND_ACCEPT($$, CallStatementNode($1)); }
+         | RETURN SC { ALLOCATE_AND_ACCEPT($$, ReturnNode()); }
+         | RETURN expr SC { ALLOCATE_AND_ACCEPT($$, ReturnNode($2)); }
+         | if LPAREN boolExpr RPAREN mMarker statement { ALLOCATE_AND_ACCEPT($$, IfNode($3, $5, $6)); }
+         | if LPAREN boolExpr RPAREN mMarker statement else nMarker mMarker statement { ALLOCATE_AND_ACCEPT($$, IfNode($3, $5, $6, $8, $9, $10)); }
+         | while mMarker LPAREN boolExpr RPAREN mMarker statement { ALLOCATE_AND_ACCEPT($$, WhileNode($2, $4, $6, $7)); }
+         | BREAK SC { ALLOCATE_AND_ACCEPT($$, BreakNode()); }
+         | CONTINUE SC { ALLOCATE_AND_ACCEPT($$, ContinueNode()); }
+         ;
+
+boolExpr : expr { ALLOCATE_AND_ACCEPT($$, BoolExprNode($1)); }
+           ;
+if : IF { ACCEPT(IfLabelNode()); }
+    ;
+else : ELSE { ACCEPT(ElseLabelNode()); }
+     ;
+while : WHILE { ACCEPT(WhileLabelNode()); }
+      ;
+call: ID LPAREN exprList RPAREN { ALLOCATE_AND_ACCEPT($$, CallNode($1, $3)); }
+    | ID LPAREN RPAREN { ALLOCATE_AND_ACCEPT($$, CallNode($1)); }
+    ;
+
+exprList: expr { ALLOCATE_AND_ACCEPT($$, ExprListNode($1)); }
+        | expr COMMA exprList { ALLOCATE_AND_ACCEPT($$, ExprListNode($1, $3)); }
+        ;
+
+
+type: INT { ALLOCATE_AND_ACCEPT($$, TypeNode(Types::INT_T)); }
+     | BYTE { ALLOCATE_AND_ACCEPT($$, TypeNode(Types::BYTE_T)); }
+     | BOOL { ALLOCATE_AND_ACCEPT($$, TypeNode(Types::BOOL_T)); }
+     ;
+
+expr: LPAREN expr RPAREN { $$ = $2; }
+    | expr BINOP_2 expr { ALLOCATE_AND_ACCEPT($$, BinOpNode($1, $2, $3)); }
+    | expr BINOP_1 expr { ALLOCATE_AND_ACCEPT($$, BinOpNode($1, $2, $3)); }
+    | ID { ALLOCATE_AND_ACCEPT($$, IdNode($1)); }
+    | call { ALLOCATE_AND_ACCEPT($$, CallExprNode($1)); }
+    | NUM { ALLOCATE_AND_ACCEPT($$, NumNode($1)); }
+    | NUM B { ALLOCATE_AND_ACCEPT($$, NumNode($1, $2)); }
+    | STRING { ALLOCATE_AND_ACCEPT($$, StringNode($1)); }
+    | TRUE { ALLOCATE_AND_ACCEPT($$, BoolNode($1)); }
+    | FALSE { ALLOCATE_AND_ACCEPT($$, BoolNode($1)); }
+    | NOT expr { ALLOCATE_AND_ACCEPT($$, NotNode($2)); }
+    | expr AND mMarker expr { ALLOCATE_AND_ACCEPT($$, AndNode($1, $3, $4)); }
+    | expr OR mMarker expr { ALLOCATE_AND_ACCEPT($$, OrNode($1, $3, $4)); }
+    | expr RELOP expr { ALLOCATE_AND_ACCEPT($$, RelOpNode($1, $2, $3)); }
+    | LPAREN type RPAREN expr { ALLOCATE_AND_ACCEPT($$, CastNode($2, $4)); }
+    ;
+
+lbrace: LBRACE { symbol_table.newScope(); }
+      ;
+
+mMarker: empty { ALLOCATE_AND_ACCEPT($$, MMarkerNode()); }
+    ;
+
+nMarker: empty { ALLOCATE_AND_ACCEPT($$, NMarkerNode()); }
+    ;
+
+empty:
+    ;
+
+%%
+
+void yyerror(const char* s) {
+    output::errorSyn(yylineno);
+    exit(1);
+}
+
+int main() {
+    yyparse();
+    // Create the concrete visitor
+    return 0;
+}

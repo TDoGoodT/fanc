@@ -1,0 +1,119 @@
+#!/urr/bin/bash
+# change these per each homework
+#	link to tests:
+
+#	number of tests:
+numtests=2
+#	command to execute test:
+command="./hw3 < t\$i.in >& t\$i.res"
+tmpdir="selfcheck_tmp"
+
+
+if [ -z "$1" ]
+	then
+	echo "Usage: $0 submission_file tests_zip"
+	exit
+fi
+submission="$1"
+tests_zip="$2"
+if [ ! -f "$submission" ]
+	then
+	echo "Submission zip file not found!"
+	exit
+fi
+
+if [ ! -f "$tests_zip" ]
+  then
+  echo "Tests zip file not found!"
+  exit
+fi
+
+rm -rf "$tmpdir" &> /dev/null
+
+if [ -d "$tmpdir" ]
+	then
+	echo "Cannot clear tmp directory. Please delete '"$tmpdir"' manually and try again"
+	exit
+fi
+
+mkdir "$tmpdir" &> /dev/null
+unzip "$submission" -d "$tmpdir" &> /dev/null
+
+if [[ $? != 0 ]]
+	then
+	echo "Unable to unzip submission file!"
+	exit
+fi
+
+unzip "$tests_zip" -d "$tmpdir" &> /dev/null
+
+if [[ $? != 0 ]]
+	then
+	echo "Unable to unzip tests!"
+	exit
+fi
+cd "$tmpdir"
+
+if [ ! -f scanner.lex ]
+	then
+	echo "File scanner.lex not found!"
+	exit
+fi
+
+if [ ! -f parser.ypp ]
+	then
+	echo "File parser.ypp not found!"
+	exit
+fi
+
+if [ ! -f hw3_output.cpp ]
+	then
+	echo "File output.cpp not found!"
+	exit
+fi
+
+if [ ! -f hw3_output.hpp ]
+	then
+	echo "File output.hpp not found!"
+	exit
+fi
+
+if [ ! -f Makefile ]
+	then
+		echo "Unable to download makefile!"
+		exit
+fi
+
+make
+
+if [ ! -f hw3 ]
+	then
+	echo "Cannot build submission!"
+	exit
+fi
+
+
+cd tests
+for file in *.in; do
+  echo "Running test $file"
+  ../hw3 < $file > "${file%%.in}".res
+done
+for file in *.in;
+do
+  name=${file%%.in}
+  diff $name.res $name.out &> /dev/null
+  	if [[ $? != 0 ]]
+  		then
+  echo "=======================$name======================="
+  		echo "Failed..."
+  		echo "Expected:"
+  		cat "$name".out
+  		echo "Got:"
+  		cat "$name".res
+  	fi
+
+done
+
+cd - &> /dev/null
+rm -rf "$tmpdir"
+exit

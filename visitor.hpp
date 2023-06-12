@@ -1,107 +1,379 @@
 //
-// Created by snir on 1/25/23.
+// Created by Snir Bachar on 06/06/2023.
 //
 
-#ifndef ANALYZER_VISITOR_HPP
-#define ANALYZER_VISITOR_HPP
+#ifndef FANC_ANALYZER_VISITOR_H
+#define FANC_ANALYZER_VISITOR_H
 
-
-#include <vector>
-#include "types.hpp"
+#include "nodes.hpp"
+#include "symbol_table.hpp"
 #include "bp.hpp"
 
-using namespace std;
-class Visitor {
+class 	ParserVisitor {
 public:
-    static void visit(struct Exp *element);
+	virtual void visitFormalDecl(FormalDeclNode &node) {};
 
-    static void visit(struct Number *element);
+	virtual void visitFormalList(FormalListNode &node) {};
 
-    static void visit(struct Declaration *element);
+	virtual void visitFormals(FormalsNode &node) {};
 
-    static void visit(struct Assignment *element);
+	virtual void visitFuncDecl(FuncDeclNode &node) {};
 
-    static void visit(struct LateAssignment *element);
+	virtual void visitFuncs(FuncsNode &node) {};
 
-    static void visit(struct FunctionCall *element);
+	virtual void visitOverride(OverrideNode &node) {};
 
-    static void visit(struct Return *element);
+	virtual void visitExpr(ExprNode &node) {};
 
-    static void visit(struct Relop *element);
+	virtual void visitId(IdNode &node) {};
 
-    static void visit(struct If_pattern *element);
+	virtual void visitExprList(ExprListNode &node) {};
 
-    static void visit(struct While *element);
+	virtual void visitType(TypeNode &node) {};
 
-    static void visit(struct Statements *element);
+	virtual void visitRetType(RetTypeNode &node) {};
 
-    static void visit(struct Statement *element);
+	virtual void visitStatement(StatementNode &node) {};
 
-    static void visit(struct Not *element);
+	virtual void visitStatements(StatementsNode &node) {};
 
-    static void visit(struct If *element);
+	virtual void visitCall(CallNode &node) {};
 
-    static void visit(struct Else *element);
+	virtual void visitCallStatement(CallStatementNode &node) {};
 
-    static void visit(struct Id *element);
+	virtual void visitNum(NumNode &node) {};
 
-    static void visit(struct String *element);
+	virtual void visitString(StringNode &node) {};
 
-    static void visit(struct Cast *element);
+	virtual void visitBool(BoolNode &node) {};
 
-    static void visit(struct Void *element);
+	virtual void visitNot(NotNode &node) {};
 
-    static void visit(struct Or *element);
+	virtual void visitCallExpr(CallExprNode &node) {};
 
-    static void visit(struct And *element);
+	virtual void visitAnd(AndNode &node) {};
 
-    static void visit(struct Bool *element);
+	virtual void visitOr(OrNode &node) {};
 
-    static void visit(struct RetType *element);
+	virtual void visitRelOp(RelOpNode &node) {};
 
-    static void visit(struct Program *element);
+	virtual void visitCast(CastNode &node) {};
 
-    static void visit(struct Funcs *element);
+	virtual void visitReturn(ReturnNode &node) {};
 
-    static void visit(struct FuncDecl *element);
+	virtual void visitIf(IfNode &node) {};
 
-    static void visit(struct Formals *element);
+	virtual void visitWhile(WhileNode &node) {};
 
-    static void visit(struct FormalsList *element);
+	virtual void visitBoolExpr(BoolExprNode &node) {};
 
-    static void visit(struct FormalDecl *element);
+	virtual void visitBreak(BreakNode &node) {};
 
-    static void visit(struct ExpList *element);
+	virtual void visitContinue(ContinueNode &node) {};
 
-    static void visit(struct Binop *element);
+	virtual void visitBinOp(BinOpNode &node) {};
 
-    static void visit(struct Trinari *element);
+	virtual void visitProgram(ProgramNode &node) {};
 
-    static void visit(struct Call *element);
+	virtual void visitVarDecl(VarDeclNode &node) {};
 
-    static void visit(struct CallExp *element);
+	virtual void visitBlock(BlockNode &node) {};
 
-    static void visit(struct InitMarker *element);
+	virtual void visitAssign(AssignNode &node) {};
 
-    static void visit(struct EndMarker *element);
+	virtual void visitFuncId(FuncIdNode &node) {};
 
-    static void visit(struct OrMarker *element);
+	virtual void visitMMarker(MMarkerNode &node) {};
 
-    static void visit(struct AndMarker *element);
-
-    static void visit(struct Int *element);
-
-    static void visit(struct Byte *element);
-
-
-    static string getLlvmRelop(struct Relop* relop);
-
-
-
-    static void handleBoolAssignment(Exp *value);
-
-    static string getValuePlace(const Exp *element);
+	virtual void visitNMarker(NMarkerNode &node) {};
+	virtual void visitIfLabel(IfLabelNode &node) {};
+	virtual void visitElseLabel(ElseLabelNode &node) {};
+	virtual void visitWhileLabel(WhileLabelNode &node) {};
 };
 
 
-#endif //ANALYZER_VISITOR_HPP
+class SymbolTableVisitor : public ParserVisitor {
+private:
+	SymbolTable &symbolTable;
+public:
+	explicit SymbolTableVisitor(SymbolTable &symbolTable) : symbolTable(symbolTable) {}
+
+	void visitProgram(ProgramNode &node) override;
+
+	void visitVarDecl(VarDeclNode &node) override;
+
+	void visitFuncId(FuncIdNode &node) override;
+
+	void visitFormals(FormalsNode &node) override;
+
+	void visitRetType(RetTypeNode &node) override;
+
+	void visitOverride(OverrideNode &node) override;
+};
+
+class ValidationVisitor : public ParserVisitor {
+private:
+	SymbolTable &symbolTable;
+	WhileContext &context;
+public:
+	explicit ValidationVisitor(SymbolTable &symbolTable, WhileContext &context) : symbolTable(symbolTable),
+																				  context(context) {}
+
+	void visitFuncId(FuncIdNode &node) override;
+	void visitFormals(FormalsNode &node) override;
+
+	void visitBoolExpr(BoolExprNode &node) override;
+
+	void visitFuncDecl(FuncDeclNode &node) override;
+
+	void visitId(IdNode &node) override;
+
+	void visitCall(CallNode &node) override;
+
+	void visitNum(NumNode &node) override;
+
+	void visitNot(NotNode &node) override;
+
+	void visitAnd(AndNode &node) override;
+
+	void visitOr(OrNode &node) override;
+
+	void visitRelOp(RelOpNode &node) override;
+
+	void visitCast(CastNode &node) override;
+
+	void visitReturn(ReturnNode &node) override;
+
+	void visitIf(IfNode &node) override;
+
+	void visitWhile(WhileNode &node) override;
+
+	void visitBreak(BreakNode &node) override;
+
+	void visitContinue(ContinueNode &node) override;
+
+	void visitBinOp(BinOpNode &node) override;
+
+	void visitProgram(ProgramNode &node) override;
+
+	void visitVarDecl(VarDeclNode &node) override;
+
+	void visitAssign(AssignNode &node) override;
+};
+
+
+class EchoVisitor : public ParserVisitor {
+public:
+	EchoVisitor() = default;
+
+	void visitBoolExpr(BoolExprNode &node) override;
+
+	void visitFormalDecl(FormalDeclNode &node) override;
+
+	void visitFormalList(FormalListNode &node) override;
+
+	void visitFormals(FormalsNode &node) override;
+
+	void visitFuncDecl(FuncDeclNode &node) override;
+
+	void visitFuncs(FuncsNode &node) override;
+
+	void visitOverride(OverrideNode &node) override;
+
+	void visitExpr(ExprNode &node) override;
+
+	void visitId(IdNode &node) override;
+
+	void visitExprList(ExprListNode &node) override;
+
+	void visitType(TypeNode &node) override;
+
+	void visitRetType(RetTypeNode &node) override;
+
+	void visitStatement(StatementNode &node) override;
+
+	void visitStatements(StatementsNode &node) override;
+
+	void visitCall(CallNode &node) override;
+
+	void visitCallStatement(CallStatementNode &node) override;
+
+	void visitNum(NumNode &node) override;
+
+	void visitString(StringNode &node) override;
+
+	void visitBool(BoolNode &node) override;
+
+	void visitNot(NotNode &node) override;
+
+	void visitCallExpr(CallExprNode &node) override;
+
+	void visitAnd(AndNode &node) override;
+
+	void visitOr(OrNode &node) override;
+
+	void visitRelOp(RelOpNode &node) override;
+
+	void visitCast(CastNode &node) override;
+
+	void visitReturn(ReturnNode &node) override;
+
+	void visitIf(IfNode &node) override;
+
+	void visitWhile(WhileNode &node) override;
+
+	void visitBreak(BreakNode &node) override;
+
+	void visitContinue(ContinueNode &node) override;
+
+	void visitBinOp(BinOpNode &node) override;
+
+	void visitProgram(ProgramNode &node) override;
+
+	void visitVarDecl(VarDeclNode &node) override;
+
+	void visitBlock(BlockNode &node) override;
+
+	void visitAssign(AssignNode &node) override;
+
+	void visitNMarker(NMarkerNode &node) override;
+	void visitMMarker(MMarkerNode &node) override;
+
+	void visitIfLabel(IfLabelNode &node) override;
+
+	void visitElseLabel(ElseLabelNode &node) override;
+
+	void visitWhileLabel(WhileLabelNode &node) override;
+};
+
+class CodeGenVisitor : public ParserVisitor {
+	SymbolTable &symbol_table;
+	CodeBuffer &buffer;
+public:
+	CodeGenVisitor(SymbolTable &symbolTable, CodeBuffer &buffer) : symbol_table(symbolTable),
+																			   buffer(buffer) {}
+	void visitStatement(StatementNode &node) override;
+	void visitStatements(StatementsNode &node) override;
+
+	void visitBoolExpr(BoolExprNode &node) override;
+
+	void visitFormalDecl(FormalDeclNode &node) override;
+
+	void visitFormalList(FormalListNode &node) override;
+
+	void visitFormals(FormalsNode &node) override;
+
+	void visitFuncDecl(FuncDeclNode &node) override;
+
+	void visitFuncs(FuncsNode &node) override;
+
+	void visitExpr(ExprNode &node) override;
+
+	void visitId(IdNode &node) override;
+
+	void visitExprList(ExprListNode &node) override;
+
+	void visitCall(CallNode &node) override;
+
+	void visitCallStatement(CallStatementNode &node) override;
+
+	void visitNum(NumNode &node) override;
+
+	void visitString(StringNode &node) override;
+
+	void visitBool(BoolNode &node) override;
+
+	void visitNot(NotNode &node) override;
+
+	void visitCallExpr(CallExprNode &node) override;
+
+	void visitAnd(AndNode &node) override;
+
+	void visitOr(OrNode &node) override;
+
+	void visitRelOp(RelOpNode &node) override;
+
+	void visitCast(CastNode &node) override;
+
+	void visitReturn(ReturnNode &node) override;
+
+	void visitIf(IfNode &node) override;
+
+	void visitWhile(WhileNode &node) override;
+
+	void visitBreak(BreakNode &node) override;
+
+	void visitContinue(ContinueNode &node) override;
+
+	void visitBinOp(BinOpNode &node) override;
+
+	void visitProgram(ProgramNode &node) override;
+
+	void visitVarDecl(VarDeclNode &node) override;
+
+	void visitBlock(BlockNode &node) override;
+
+	void visitAssign(AssignNode &node) override;
+
+	void visitMMarker(MMarkerNode &node) override;
+
+	void visitNMarker(NMarkerNode &node) override;
+};
+
+
+class TypesVisitor : public ParserVisitor {
+private:
+	SymbolTable &symbolTable;
+public:
+	explicit TypesVisitor(SymbolTable &symbolTable) : symbolTable(symbolTable) {}
+
+	void visitId(IdNode &node) override;
+
+	void visitBoolExpr(BoolExprNode &node) override;
+
+	void visitNum(NumNode &node) override;
+
+	void visitString(StringNode &node) override;
+
+	void visitBool(BoolNode &node) override;
+
+	void visitNot(NotNode &node) override;
+
+	void visitCallExpr(CallExprNode &node) override;
+
+	void visitAnd(AndNode &node) override;
+
+	void visitOr(OrNode &node) override;
+
+	void visitRelOp(RelOpNode &node) override;
+
+	void visitCast(CastNode &node) override;
+
+	void visitBinOp(BinOpNode &node) override;
+};
+
+class ScopeVisitor : public ParserVisitor {
+private:
+	SymbolTable &symbolTable;
+	WhileContext &context;
+public:
+	explicit ScopeVisitor(SymbolTable &symbolTable, WhileContext &context) : symbolTable(symbolTable),
+																			 context(context) {}
+
+	void visitIfLabel(IfLabelNode &node) override;
+
+	void visitWhileLabel(WhileLabelNode &node) override;
+
+	void visitElseLabel(ElseLabelNode &node) override;
+	
+	void visitFuncDecl(FuncDeclNode &node) override;
+
+	void visitBlock(BlockNode &node) override;
+
+	void visitWhile(WhileNode &node) override;
+
+	void visitIf(IfNode &node) override;
+
+};
+
+#endif //FANC_ANALYZER_VISITOR_H

@@ -1,0 +1,7 @@
+void main() {
+	if (true) {
+	    print("Hello world!");
+	} else {
+        print("Goodbye world!");
+    }
+}

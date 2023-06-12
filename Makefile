@@ -1,46 +1,36 @@
 .PHONY: all clean
-all: clean-all analyzer test
 
-flex-scanner:
+parser: clean
 	flex scanner.lex
-	mv lex.yy.c lex.yy.cpp
+	bison -d parser.ypp --report=all
+	g++ -std=c++17 -o hw3 *.cpp *.c
 
-bison-analyzer:
-	bison  -d	analyzer.ypp.txt -o analyzer.tab.cpp
-	#bison  -d	analyzer.ypp -o analyzer.tab.cpp
+scanner: clean
+	flex scanner.lex
+	g++ -std=c++17 -o hw1 *.c
 
-pre-build: bison-analyzer flex-scanner
-analyzer: clean clean-test pre-build
-	g++ -std=c++17 -o analyzer 	*.cpp *.hpp
-	chmod 777 ./analyzer
-	cp analyzer test/analyzer
-	cd test && ./scripts/sanity.sh analyzer
+sanity1: scanner
+	chmod +x hw1
+	./hw1 < tests/sanity_test.txt
 
-clean-all: clean clean-test
+sanity2: parser
+	chmod +x hw3
+	./hw3 < tests/sanity_test.txt
+
+sanity: sanity1 sanity2
 
 clean:
-	rm -f parser scanner analyzer
-	rm -f lex.yy.*
-	rm -f *.tab.*pp
+	rm -f lex.yy.c
+	rm -f parser.tab.*pp
+	rm -f parser.output
+	rm -f scanner.cpp
+	rm -f hw2 hw1 hw3
 	rm -f *.zip
-
-clean-test:
-	rm -f test/parser
-	rm -f test/analyzer
-	rm -f test/scanner
-	rm -f test/*.res
-	rm -f test/*.report
-	rm -f test/*.diff
-	rm -f test/*cmd.sh
+	rm -rf selfcheck_tmp
 
 submit: clean
-	zip 000000000-313350035.zip *.ypp *.cpp *.hpp *.lex *.md
+	zip 313350035.zip *.cpp *.hpp parser.ypp scanner.lex Makefile README.md
+	zip tests.zip tests/*.in tests/*.out
+	bash selfcheck-hw3 313350035.zip tests.zip
 
-scanner-test: scanner
-	echo "not implemented yet"
-
-parser-test: clean-test parser
-	cd test && ./parser-test.sh
-
-test: clean-test  scanner-test parser-test
 

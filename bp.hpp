@@ -13,7 +13,8 @@ enum BranchLabelIndex {
 };
 
 class CodeBuffer {
-    CodeBuffer();
+public:
+	CodeBuffer();
 
     CodeBuffer(CodeBuffer const &);
 

@@ -1,31 +1,99 @@
+//
+// Created by Snir Bachar on 07/06/2023.
+//
 
-#ifndef ANALYZER_VALIDATIONS_HPP
-#define ANALYZER_VALIDATIONS_HPP
+#ifndef FANC_ANALYZER_VALIDATIONS_H
+#define FANC_ANALYZER_VALIDATIONS_H
 
-#include "symbol_table_manager.hpp"
-#include "actions.hpp"
+#include "nodes.hpp"
+#include "symbol_table.hpp"
 
-namespace validations {
-    bool is_call_correct(Store *store, struct Call *call, int lineno);
+static inline void validateNotMain(FuncDeclNode &node) {
+	if (node.getId()->getId() == "main") {
+		output::errorMainOverride(yylineno);
+		exit(1);
+	}
+}
 
-    bool is_id_declared(Store *store, struct Id *id);
+static inline void validateIsNumber(Types type) {
+	if (type != Types::INT_T && type != Types::BYTE_T) {
+		output::errorMismatch(yylineno);
+		exit(1);
+	}
+}
 
-    bool is_func_declared(Store *store, struct Id *func_id);
+static inline void validateMainExists(const std::vector<const FuncDeclNode *> &funcs) {
+	bool found = false;
+	for (auto func: funcs) {
+		if (func->getId()->getId() == "main" && func->getFormals()->getFormalDecls() == nullptr &&
+			func->getRetType()->getType()->getType() == Types::VOID_T) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		output::errorMainMissing();
+		exit(1);
+	}
+}
 
-    bool is_type_compatible(struct Exp *exp1, struct Exp *exp2);
+static inline void validateIsBool(Types types) {
+	if (types != Types::BOOL_T) {
+		output::errorMismatch(yylineno);
+		exit(1);
+	}
+}
 
-    bool has_value(struct Exp *exp);
+static inline void validateCast(Types from, Types to, bool explicit_cast = false) {
+	if (!types_match(from, to, explicit_cast)) {
+		output::errorMismatch(yylineno);
+		exit(1);
+	}
+}
 
-    bool is_bool(struct Exp *exp);
+static inline void validateIdIsDefined(IdNode &node, SymbolTable &symbolTable) {
+	if (symbolTable.firstIdSymbol(node.getId()) == nullptr) {
+		output::errorUndef(yylineno, node.getId());
+		exit(1);
+	}
+}
 
-    bool is_castable(Type::TypeCase fromType, Type::TypeCase toTypeCase, bool explicit_cast = false);
+static inline void validateIsOverride(FuncDeclNode &node, SymbolTable &symbolTable) {
+	if (!symbolTable.isOverride(node.getId()->getId())) {
+		output::errorFuncNoOverride(yylineno, node.getId()->getId());
+		exit(1);
+	}
+}
 
-    bool is_byte_to_large(struct Byte *byte);
+static inline void validateFuncDoesntExist(const std::string &id, SymbolTable &symbolTable) {
+	if (symbolTable.getFuncsByName(id).size() > 0) {
+		output::errorDef(yylineno, id);
+		exit(1);
+	}
+}
+static inline void validateIdDoesntExist(std::string id,const std::vector<FormalDeclNode *> &formals) {
+	vector<string> seen_ids;
+	for (auto formal: formals) {
+		if (std::count(seen_ids.begin(), seen_ids.end(), formal->getId()) > 0) {
+			output::errorDef(yylineno, id);
+			exit(1);
+		}
+		seen_ids.push_back(formal->getId());
+	}
+}
+static inline void validateIsntOverride(FuncDeclNode &node, SymbolTable &symbolTable) {
+	if (symbolTable.isOverride(node.getId()->getId())) {
+		output::errorOverrideWithoutDeclaration(yylineno, node.getId()->getId());
+		exit(1);
+	}
+}
 
-    bool is_formal_declared(vector<struct FormalDecl *> &formal, Id *id);
+static inline void validatePrototypeMatch(FuncDeclNode &node, FuncSymbol *func) {
+	if (func->formals.getFormalDecls()->getFormalDecls().size() !=
+		node.getFormals()->getFormalDecls()->getFormalDecls().size()) {
+		output::errorPrototypeMismatch(yylineno, node.getId()->getId());
+		exit(1);
+	}
+}
 
-    void validate_main(Store *pStore);
-
-
-};
-#endif //ANALYZER_VALIDATIONS_HPP
+#endif //FANC_ANALYZER_VALIDATIONS_H

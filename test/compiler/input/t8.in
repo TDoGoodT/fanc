@@ -1,0 +1,22 @@
+int decrement(int a) {
+    return a - 1;
+}
+int subtract(int a, int ab) {
+    int tmpa = a;
+    int tmpb = ab;
+    while (tmpb > 0) {
+        tmpa = decrement(tmpa);
+        tmpb = decrement(tmpb);
+    }
+    return tmpa;
+}
+
+void main() {
+    int num1 = 10;
+    int num2 = 5;
+
+    int result = subtract(num1, num2);
+
+    print("Difference between 10 and 5: ");
+    printi(result);
+}

@@ -1,0 +1,23 @@
+
+int decrement(int n) {
+    return n - 1;
+}
+int multiply(int a, int bb) {
+    return a * bb;
+}
+int factorial(int n) {
+    if (n == 0) {
+        return 1;
+    } else {
+        return multiply(n, factorial(decrement(n)));
+    }
+}
+
+void main() {
+    int num = 5;
+
+    int result = factorial(num);
+
+    print("Factorial of 5: ");
+    printi(result);
+}

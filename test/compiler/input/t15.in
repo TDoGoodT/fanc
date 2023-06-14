@@ -1,0 +1,43 @@
+int multiply(int a, int bb) {
+    return a * bb;
+}
+int decrement(int a) {
+    return a - 1;
+}
+int increment(int a) {
+    return a + 1;
+}
+int subtract(int a, int ab) {
+    int tmpa = a;
+    int tmpb = ab;
+    while (tmpb > 0) {
+        tmpa = decrement(tmpa);
+        tmpb = decrement(tmpb);
+    }
+    return tmpa;
+}
+int modulo(int a, int ab) {
+    int tmpa = a;
+    while (tmpa >= ab) {
+        tmpa = subtract(tmpa, ab);
+    }
+    return tmpa;
+}
+int gcd(int a, int ab) {
+    while (ab != 0) {
+        int temp = ab;
+        temp = modulo(a, ab);
+        a = temp;
+    }
+    return a;
+}
+
+void main() {
+    int num1 = 15;
+    int num2 = 20;
+
+    int result = gcd(num1, num2);
+
+    print("GCD of 15 and 20: ");
+    printi(result);
+}

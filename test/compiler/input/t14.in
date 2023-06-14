@@ -1,0 +1,30 @@
+int decrement(int num) {
+    return num - 1;
+}
+bool isEven(int num) {
+    if (num / 2 == (num + 1) / 2) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void main() {
+    int num1 = 6;
+    int num2 = 7;
+
+    bool result1 = isEven(num1);
+    bool result2 = isEven(num2);
+
+    if (result1) {
+        print("6 is even");
+    } else {
+        print("6 is odd");
+    }
+
+    if (result2) {
+        print("7 is even");
+    } else {
+        print("7 is odd");
+    }
+}

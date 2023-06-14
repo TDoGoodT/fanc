@@ -74,7 +74,7 @@ static inline void validateFuncDoesntExist(const std::string &id, SymbolTable &s
 static inline void validateIdDoesntExist(std::string id,const std::vector<FormalDeclNode *> &formals) {
 	vector<string> seen_ids;
 	for (auto formal: formals) {
-		if (std::count(seen_ids.begin(), seen_ids.end(), formal->getId()) > 0) {
+		if (std::count(seen_ids.begin(), seen_ids.end(), formal->getId()) > 1) {
 			output::errorDef(yylineno, id);
 			exit(1);
 		}

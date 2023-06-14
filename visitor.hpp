@@ -121,6 +121,7 @@ public:
 
 	void visitFuncId(FuncIdNode &node) override;
 	void visitFormals(FormalsNode &node) override;
+	void visitCallExpr(CallExprNode &node) override;
 
 	void visitBoolExpr(BoolExprNode &node) override;
 
@@ -163,8 +164,10 @@ public:
 
 
 class EchoVisitor : public ParserVisitor {
+private:
+	CodeBuffer &buffer;
 public:
-	EchoVisitor() = default;
+	EchoVisitor(CodeBuffer &codeBuffer) : buffer(codeBuffer) {}
 
 	void visitBoolExpr(BoolExprNode &node) override;
 
@@ -249,31 +252,22 @@ public:
 class CodeGenVisitor : public ParserVisitor {
 	SymbolTable &symbol_table;
 	CodeBuffer &buffer;
+	WhileContext &context;
 public:
-	CodeGenVisitor(SymbolTable &symbolTable, CodeBuffer &buffer) : symbol_table(symbolTable),
-																			   buffer(buffer) {}
-	void visitStatement(StatementNode &node) override;
+	CodeGenVisitor(SymbolTable &symbolTable, CodeBuffer &buffer, WhileContext &context) : symbol_table(symbolTable),
+																						 buffer(buffer),
+																						 context(context) {}
 	void visitStatements(StatementsNode &node) override;
 
+	void visitExprList(ExprListNode &node) override;
+
 	void visitBoolExpr(BoolExprNode &node) override;
-
-	void visitFormalDecl(FormalDeclNode &node) override;
-
-	void visitFormalList(FormalListNode &node) override;
 
 	void visitFormals(FormalsNode &node) override;
 
 	void visitFuncDecl(FuncDeclNode &node) override;
 
-	void visitFuncs(FuncsNode &node) override;
-
-	void visitExpr(ExprNode &node) override;
-
 	void visitId(IdNode &node) override;
-
-	void visitExprList(ExprListNode &node) override;
-
-	void visitCall(CallNode &node) override;
 
 	void visitCallStatement(CallStatementNode &node) override;
 

@@ -1,0 +1,53 @@
+int multiply(int a, int bb) {
+    return a * bb;
+}
+int decrement(int a) {
+    return a - 1;
+}
+int increment(int a) {
+    return a + 1;
+}
+int subtract(int a, int ab) {
+    int tmpa = a;
+    int tmpb = ab;
+    while (tmpb > 0) {
+        tmpa = decrement(tmpa);
+        tmpb = decrement(tmpb);
+    }
+    return tmpa;
+}
+int modulo(int a, int ab) {
+    int tmpa = a;
+    while (tmpa >= ab) {
+        tmpa = subtract(tmpa, ab);
+    }
+    return tmpa;
+}
+bool isPrime(int n) {
+    if (n < 2) {
+        return false;
+    } else if (n == 2) {
+        return true;
+    } else {
+        int divisor = 2;
+        while (multiply(divisor, divisor) <= n) {
+            if (modulo(n, divisor) == 0) {
+                return false;
+            }
+            divisor = increment(divisor);
+        }
+        return true;
+    }
+}
+
+void main() {
+    int num = 17;
+
+    bool result = isPrime(num);
+
+    if (result) {
+        print("17 is prime");
+    } else {
+        print("17 is not prime");
+    }
+}

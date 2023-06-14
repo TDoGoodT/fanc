@@ -1,0 +1,30 @@
+
+int decrement(int n) {
+    return n - 1;
+}
+int increment(int n) {
+    return n + 1;
+}
+int multiply(int a, int abb) {
+    return a * abb;
+}
+
+int power(int base, int exponent) {
+    int result = 1;
+    int count = 0;
+    while (count < exponent) {
+        result = multiply(result, base);
+        count = increment(count);
+    }
+    return result;
+}
+
+void main() {
+    int base = 2;
+    int exponent = 5;
+
+    int result = power(base, exponent);
+
+    print("2 raised to the power of 5: ");
+    printi(result);
+}

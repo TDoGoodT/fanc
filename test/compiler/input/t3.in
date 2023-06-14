@@ -1,0 +1,6 @@
+void main() {
+    int x = 1;
+    int y = x + 1;
+    x = y + 1;
+    printi(x);
+}

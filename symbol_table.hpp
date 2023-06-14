@@ -12,6 +12,7 @@
 
 class WhileContext {
 	int counter;
+	std::vector<pair<int, BranchLabelIndex>> breakLabels;
 public:
 	WhileContext() : counter(0) {}
 
@@ -23,7 +24,16 @@ public:
 		counter++;
 	}
 
+	void addBreak(int index) {
+		breakLabels.emplace_back(index, BranchLabelIndex::FIRST);
+	}
+
+	std::vector<pair<int, BranchLabelIndex>> getBreaks() {
+		return breakLabels;
+	}
+
 	void exitWhile() {
+		breakLabels.clear();
 		counter--;
 	}
 };
@@ -93,7 +103,7 @@ class SymbolTable {
 		auto &formal_list = formal_decls->getFormalDecls();
 		for (int i = 0; i < formal_list.size(); ++i) {
 			auto &formal = formal_list[i];
-			IdSymbol id_symbol(formal->getId(), *formal->getType(), -(i + 1), "f" + formal->getId());
+			IdSymbol id_symbol(formal->getId(), *formal->getType(), -(i + 1), to_string(i));
 			scopes_stack.back().push_back(id_symbol);
 		}
 	}
@@ -116,7 +126,7 @@ class SymbolTable {
 		id_counter++;
 		for (auto it = scopes_stack.rbegin(); it != scopes_stack.rend(); ++it) {
 			auto &scope = *it;
-			if (!scope.empty()) {
+			if (!scope.empty() && scope.back().offset > 0) {
 				return scope.back().offset + 1;
 			}
 		}
@@ -136,11 +146,6 @@ public:
 
 	std::vector<FuncSymbol> getAllFuncs() {
 		std::vector<FuncSymbol> all_funcs = funcs;
-		if (!current_function.name.empty()) {
-			FuncSymbol crr_func(current_function.name, current_function.type, current_function.formals,
-								current_function.override);
-			all_funcs.emplace_back(crr_func);
-		}
 		return all_funcs;
 	}
 
@@ -158,11 +163,11 @@ public:
 	}
 
 	Types getCurrentRetType() const {
-		return current_function.type.getType();
+		return funcs.back().type.getType();
 	}
 
 	bool getCurrentOverride() const {
-		return current_function.override;
+		return funcs.back().override;
 	}
 
 	void setCurrentFuncId(const std::string &name) {
@@ -190,7 +195,7 @@ public:
 	void addIdSymbol(const std::string &name, const TypeNode &type) {
 		auto &scope = scopes_stack.back();
 		int offset = allocateSpace();
-		IdSymbol symbol(name, type, offset, "id_" + std::to_string(id_counter));
+		IdSymbol symbol(name, type, offset, "id_" + name + "_" + std::to_string(id_counter));
 		scope.emplace_back(symbol);
 	}
 

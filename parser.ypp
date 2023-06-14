@@ -8,7 +8,7 @@
 #include "parser.tab.hpp"
 #include "bp.hpp"
 #include "hw3_output.hpp"
-#define DEBUG 0
+#define DEBUG 1
 #define ACCEPT(node) do { \
     auto root = node; \
     if(DEBUG) { \
@@ -43,12 +43,12 @@ SymbolTable symbol_table;
 WhileContext while_context;
 CodeBuffer buffer;
 ProgramNode* root;
-EchoVisitor echo_visitor;
+EchoVisitor echo_visitor(buffer);
 TypesVisitor types_visitor(symbol_table);
 ValidationVisitor validation_visitor(symbol_table, while_context);
 SymbolTableVisitor symbol_table_visitor(symbol_table);
 ScopeVisitor scope_visitor(symbol_table, while_context);
-CodeGenVisitor code_gen_visitor(symbol_table, buffer);
+CodeGenVisitor code_gen_visitor(symbol_table, buffer, while_context);
 %}
 %union {
     char* str;
@@ -188,11 +188,11 @@ expr: LPAREN expr RPAREN { $$ = $2; }
     | expr BINOP_1 expr { ALLOCATE_AND_ACCEPT($$, BinOpNode($1, $2, $3)); }
     | ID { ALLOCATE_AND_ACCEPT($$, IdNode($1)); }
     | call { ALLOCATE_AND_ACCEPT($$, CallExprNode($1)); }
-    | NUM { ALLOCATE_AND_ACCEPT($$, NumNode($1)); }
-    | NUM B { ALLOCATE_AND_ACCEPT($$, NumNode($1, $2)); }
+    | NUM { ALLOCATE_AND_ACCEPT($$, NumNode($1, false)); }
+    | NUM B { ALLOCATE_AND_ACCEPT($$, NumNode($1, true)); }
     | STRING { ALLOCATE_AND_ACCEPT($$, StringNode($1)); }
-    | TRUE { ALLOCATE_AND_ACCEPT($$, BoolNode($1)); }
-    | FALSE { ALLOCATE_AND_ACCEPT($$, BoolNode($1)); }
+    | TRUE { ALLOCATE_AND_ACCEPT($$, BoolNode(true)); }
+    | FALSE { ALLOCATE_AND_ACCEPT($$, BoolNode(false)); }
     | NOT expr { ALLOCATE_AND_ACCEPT($$, NotNode($2)); }
     | expr AND mMarker expr { ALLOCATE_AND_ACCEPT($$, AndNode($1, $3, $4)); }
     | expr OR mMarker expr { ALLOCATE_AND_ACCEPT($$, OrNode($1, $3, $4)); }

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <deque>
 #include <string>
 #include "tokens.hpp"
 #include "bp.hpp"
@@ -38,7 +39,7 @@ public:
 
 class MMarkerNode : public Node {
 public:
-	std::string label = "&";
+	std::string label = "";
 	void accept(class ParserVisitor &visitor) override;
 };
 
@@ -305,8 +306,25 @@ class ExprNode : public Node {
 public:
 	std::vector<std::pair<int, BranchLabelIndex>> true_list{};
 	std::vector<std::pair<int, BranchLabelIndex>> false_list{};
-	std::string place = "&"; // & means no var
+	std::string place = "";
 	Types expr_type;
+
+	std::string getLlvmType() const {
+		switch (expr_type) {
+			case Types::INT_T:
+				return "i32";
+			case Types::BOOL_T:
+				return "i1";
+			case Types::STRING_T:
+				return "i8*";
+			case Types::VOID_T:
+				return "void";
+			case Types::BYTE_T:
+				return "i8";
+			default:
+				return "i32";
+		}
+	}
 
 	void accept(class ParserVisitor &visitor) override;
 };
@@ -327,7 +345,7 @@ public:
 
 class ExprListNode : public Node {
 private:
-	std::vector<ExprNode *> exprs;
+	std::deque<ExprNode *> exprs;
 public:
 	explicit ExprListNode(ExprNode *expr, ExprListNode *exprs = nullptr) {
 		this->exprs.push_back(expr);
@@ -339,9 +357,7 @@ public:
 		}
 	}
 
-	explicit ExprListNode(const std::vector<ExprNode *> &exprs) : exprs(exprs) {}
-
-	const std::vector<ExprNode *> &getExprs() const {
+	const std::deque<ExprNode *> &getExprs() const {
 		return exprs;
 	}
 
@@ -380,7 +396,8 @@ private:
 	std::string num;
 	bool is_byte;
 public:
-	explicit NumNode(char *num, bool is_byte = false) : num(num), is_byte(is_byte) {}
+	explicit NumNode(char *num, bool is_byte = false) : num(num), is_byte(is_byte) {
+	}
 
 	int getNum() const {
 		return std::stoi(num);
@@ -397,9 +414,9 @@ class StringNode : public ExprNode {
 private:
 	std::string str;
 public:
-	explicit StringNode(char *str) : str(str) {}
+	explicit StringNode(char *str) : StringNode(std::string(str)) {}
 
-	explicit StringNode(std::string str) : str(std::move(str)) {}
+	explicit StringNode(std::string str) : str(str.substr(1, str.size() - 2)) {}
 
 	const std::string &getStr() const {
 		return str;

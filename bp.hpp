@@ -36,6 +36,7 @@ public:
 
     //writes command to the buffer, returns its location in the buffer
     int emit(const std::string &command, bool isGlobal = false);
+	void emitComment(const std::string &comment);
 
     //gets a pair<int,BranchLabelIndex> item of the form {buffer_location, branch_label_index} and creates a list for it
     const static vector<pair<int, BranchLabelIndex>> makelist(pair<int, BranchLabelIndex> item);
@@ -75,6 +76,7 @@ public:
     string newLabel();
 
     int emitLabel(const string&);
+
 
     int getLineNumber();
 

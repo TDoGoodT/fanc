@@ -5,159 +5,159 @@
 #include "visitor.hpp"
 
 void EchoVisitor::visitFormalDecl(FormalDeclNode &node) {
-	std::cout << "FormalDecl" << std::endl;
+	buffer.emitComment("FormalDecl");
 }
 
 void EchoVisitor::visitFormalList(FormalListNode &node) {
-	std::cout << "FormalList" << std::endl;
+	buffer.emitComment("FormalList");
 }
 
 void EchoVisitor::visitFormals(FormalsNode &node) {
-	std::cout << "Formals" << std::endl;
+	buffer.emitComment("Formals");
 }
 
 void EchoVisitor::visitFuncDecl(FuncDeclNode &node) {
-	std::cout << "FuncDecl" << std::endl;
+	buffer.emitComment("FuncDecl");
 }
 
 void EchoVisitor::visitFuncs(FuncsNode &node) {
-	std::cout << "Funcs" << std::endl;
+	buffer.emitComment("Funcs");
 }
 
 void EchoVisitor::visitOverride(OverrideNode &node) {
-	std::cout << "Override: " << node.getOverride() << std::endl;
+	buffer.emitComment("Override: " + to_string(node.getOverride()));
 }
 
 void EchoVisitor::visitExpr(ExprNode &node) {
-	std::cout << "Expr" << std::endl;
+	buffer.emitComment("Expr");
 }
 
 void EchoVisitor::visitId(IdNode &node) {
-	std::cout << "Id" << std::endl;
+	buffer.emitComment("Id");
 }
 
 void EchoVisitor::visitExprList(ExprListNode &node) {
-	std::cout << "ExprList" << std::endl;
+	buffer.emitComment("ExprList");
 }
 
 void EchoVisitor::visitType(TypeNode &node) {
-	std::cout << "Type: " << node.getType() << std::endl;
+	buffer.emitComment("Type: " + node.getLlvmType());
 }
 
 void EchoVisitor::visitRetType(RetTypeNode &node) {
-	std::cout << "RetType" << std::endl;
+	buffer.emitComment("RetType");
 }
 
 void EchoVisitor::visitStatement(StatementNode &node) {
-	std::cout << "Statement" << std::endl;
+	buffer.emitComment("Statement");
 }
 
 void EchoVisitor::visitStatements(StatementsNode &node) {
-	std::cout << "Statements" << std::endl;
+	buffer.emitComment("Statements");
 }
 
 void EchoVisitor::visitCall(CallNode &node) {
-	std::cout << "Call: " << node.getId() << std::endl;
+	buffer.emitComment("Call: " + node.getId());
 }
 
 void EchoVisitor::visitCallStatement(CallStatementNode &node) {
-	std::cout << "CallStatement" << std::endl;
+	buffer.emitComment("CallStatement");
 }
 
 void EchoVisitor::visitNum(NumNode &node) {
-	std::cout << "Num: " << node.getNum() << std::endl;
+	buffer.emitComment("Num: " + to_string(node.getNum()));
 }
 
 void EchoVisitor::visitString(StringNode &node) {
-	std::cout << "String: " << node.getStr() << std::endl;
+	buffer.emitComment("String: " + node.getStr());
 }
 
 void EchoVisitor::visitBool(BoolNode &node) {
-	std::cout << "Bool" << std::endl;
+	buffer.emitComment("Bool");
 }
 
 void EchoVisitor::visitNot(NotNode &node) {
-	std::cout << "Not" << std::endl;
+	buffer.emitComment("Not");
 }
 
 void EchoVisitor::visitCallExpr(CallExprNode &node) {
-	std::cout << "CallExpr" << std::endl;
+	buffer.emitComment("CallExpr");
 }
 
 void EchoVisitor::visitAnd(AndNode &node) {
-	std::cout << "And" << std::endl;
+	buffer.emitComment("And");
 }
 
 void EchoVisitor::visitOr(OrNode &node) {
-	std::cout << "Or" << std::endl;
+	buffer.emitComment("Or");
 }
 
 void EchoVisitor::visitRelOp(RelOpNode &node) {
-	std::cout << "RelOp" << std::endl;
+	buffer.emitComment("RelOp");
 }
 
 void EchoVisitor::visitCast(CastNode &node) {
-	std::cout << "Cast" << std::endl;
+	buffer.emitComment("Cast");
 }
 
 void EchoVisitor::visitReturn(ReturnNode &node) {
-	std::cout << "Return" << std::endl;
+	buffer.emitComment("Return");
 }
 
 void EchoVisitor::visitIf(IfNode &node) {
-	std::cout << "If" << std::endl;
+	buffer.emitComment("If");
 }
 
 void EchoVisitor::visitWhile(WhileNode &node) {
-	std::cout << "While" << std::endl;
+	buffer.emitComment("While");
 }
 
 void EchoVisitor::visitBreak(BreakNode &node) {
-	std::cout << "Break" << std::endl;
+	buffer.emitComment("Break");
 }
 
 void EchoVisitor::visitContinue(ContinueNode &node) {
-	std::cout << "Continue" << std::endl;
+	buffer.emitComment("Continue");
 }
 
 void EchoVisitor::visitBinOp(BinOpNode &node) {
-	std::cout << "BinOp" << std::endl;
+	buffer.emitComment("BinOp");
 }
 
 void EchoVisitor::visitProgram(ProgramNode &node) {
-	std::cout << "Program" << std::endl;
+	buffer.emitComment("Program");
 }
 void EchoVisitor::visitBoolExpr(BoolExprNode &node) {
-	std::cout << "BoolExpr" << std::endl;
+	buffer.emitComment("BoolExpr");
 }
 
 void EchoVisitor::visitVarDecl(VarDeclNode &node) {
-	std::cout << "VarDecl: " << node.getId() << std::endl;
+	buffer.emitComment("VarDecl: " + node.getId());
 }
 
 void EchoVisitor::visitBlock(BlockNode &node) {
-	std::cout << "Block" << std::endl;
+	buffer.emitComment("Block");
 }
 
 void EchoVisitor::visitAssign(AssignNode &node) {
-	std::cout << "Assign" << std::endl;
+	buffer.emitComment("Assign");
 }
 
 
 void EchoVisitor::visitNMarker(NMarkerNode &node) {
-	std::cout << "NMarker" << std::endl;
+	buffer.emitComment("NMarker");
 }
 
 void EchoVisitor::visitMMarker(MMarkerNode &node) {
-	std::cout << "MMarker" << std::endl;
+	buffer.emitComment("MMarker");
 }
 
 void EchoVisitor::visitIfLabel(IfLabelNode &node) {
-	std::cout << "IfLabel" << std::endl;
+	buffer.emitComment("IfLabel");
 }
 void EchoVisitor::visitElseLabel(ElseLabelNode &node) {
-	std::cout << "ElseLabel" << std::endl;
+	buffer.emitComment("ElseLabel");
 }
 void EchoVisitor::visitWhileLabel(WhileLabelNode &node) {
-	std::cout << "WhileLabel" << std::endl;
+	buffer.emitComment("WhileLabel");
 }

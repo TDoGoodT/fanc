@@ -127,6 +127,13 @@ void ValidationVisitor::visitCall(CallNode &node) {
 	}
 }
 
+void ValidationVisitor::visitCallExpr(CallExprNode &node) {
+	if (node.expr_type == Types::VOID_T) {
+		output::errorMismatch(yylineno);
+		exit(1);
+	}
+}
+
 
 void ValidationVisitor::visitFormals(FormalsNode &node) {
 	auto formals = node.getFormalDecls();

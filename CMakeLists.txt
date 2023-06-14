@@ -14,7 +14,13 @@ add_custom_target(
 
 include_directories(.)
 
-add_executable(fanc_analyzer
+add_custom_command(
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target flex_bison
+        COMMENT "Running bison and flex"
+        OUTPUT parser.tab.cpp parser.tab.hpp scanner.cpp
+)
+
+add_executable(fanc
         nodes.cpp
         nodes.hpp
         symbol_table.hpp
@@ -34,10 +40,4 @@ add_executable(fanc_analyzer
         hw3_output.hpp
         visitor.hpp parser.ypp)
 
-add_dependencies(fanc_analyzer flex_bison)
-
-add_custom_command(
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target flex_bison
-        COMMENT "Running bison and flex"
-        OUTPUT parser.tab.cpp parser.tab.hpp scanner.cpp
-)
+add_dependencies(fanc flex_bison)

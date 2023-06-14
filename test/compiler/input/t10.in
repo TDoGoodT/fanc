@@ -1,0 +1,29 @@
+int decrement(int a) {
+    return a - 1;
+}
+int subtract(int a, int ab) {
+    int tmpa = a;
+    int tmpb = ab;
+    while (tmpb > 0) {
+        tmpa = decrement(tmpa);
+        tmpb = decrement(tmpb);
+    }
+    return tmpa;
+}
+int modulo(int a, int ab) {
+    int tmpa = a;
+    while (tmpa >= ab) {
+        tmpa = subtract(tmpa, ab);
+    }
+    return tmpa;
+}
+
+void main() {
+    int num1 = 10;
+    int num2 = 3;
+
+    int result = modulo(num1, num2);
+
+    print("Modulo of 10 and 3: ");
+    printi(result);
+}

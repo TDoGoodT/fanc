@@ -1,0 +1,33 @@
+int decrement(int a) {
+    return a - 1;
+}
+int subtract(int a, int ab) {
+    int tmpa = a;
+    int tmpb = ab;
+    while (tmpb > 0) {
+        tmpa = decrement(tmpa);
+        tmpb = decrement(tmpb);
+    }
+    return tmpa;
+}
+int add(int a, int ab) {
+    return a + ab;
+}
+int multiply(int a, int ab) {
+    int result = 0;
+    int tmp = ab;
+    while (tmp > 0) {
+        result = add(result, a);
+        int tmp = subtract(ab, 1);
+    }
+    return result;
+}
+void main() {
+    int num1 = 5;
+    int num2 = 10;
+
+    int result = multiply(num1, num2);
+
+    print("Product of 5 and 10: ");
+    printi(result);
+}

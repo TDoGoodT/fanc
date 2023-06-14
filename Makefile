@@ -1,9 +1,17 @@
 .PHONY: all clean
 
+
+
 parser: clean
 	flex scanner.lex
 	bison -d parser.ypp --report=all
-	g++ -std=c++17 -o hw3 *.cpp *.c
+	g++ -std=c++17 -o bin/hw3 *.cpp *.c
+	chmod +x bin/hw3
+
+parser-cmake:
+	"/Users/snir/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/231.8109.222/CLion.app/Contents/bin/cmake/mac/bin/cmake" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=/Users/snir/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/231.8109.222/CLion.app/Contents/bin/ninja/mac/ninja" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -G Ninja -S /Users/snir/WA/fanc -B /Users/snir/WA/fanc/cmake-build-debug
+	"/Users/snir/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/231.8109.222/CLion.app/Contents/bin/cmake/mac/bin/cmake" --build /Users/snir/WA/fanc/cmake-build-debug --target fanc -j 8
+	"/Users/snir/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/231.8109.222/CLion.app/Contents/bin/cmake/mac/bin/cmake" --build /Users/snir/WA/fanc/cmake-build-debug --target fanc -j 8
 
 scanner: clean
 	flex scanner.lex

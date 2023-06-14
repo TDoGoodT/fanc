@@ -21,6 +21,10 @@ string CodeBuffer::newVar() {
     return to_string(varCounter++);
 }
 
+void CodeBuffer::emitComment(const std::string &comment) {
+	emit("; " + comment);
+}
+
 string CodeBuffer::genLabel() {
     string label = newLabel();
     emitLabel(label + ":");

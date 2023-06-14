@@ -1,0 +1,12 @@
+int add(int a, int ab) {
+    return a + ab;
+}
+
+void main() {
+    int num1 = 5;
+    int num2 = 10;
+    int sum = add(num1, num2);
+
+    print("Sum of 5 and 10:");
+    printi(sum);
+}

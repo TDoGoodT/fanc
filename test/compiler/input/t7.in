@@ -18,7 +18,7 @@ int multiply(int a, int ab) {
     int tmp = ab;
     while (tmp > 0) {
         result = add(result, a);
-        int tmp = subtract(ab, 1);
+        tmp = subtract(tmp, 1);
     }
     return result;
 }
@@ -28,6 +28,6 @@ void main() {
 
     int result = multiply(num1, num2);
 
-    print("Product of 5 and 10: ");
+    print("Product of 5 and 10:");
     printi(result);
 }

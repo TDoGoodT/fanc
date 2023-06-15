@@ -1,0 +1,8 @@
+void main(){
+    byte x = 255b;
+    byte y = 1b;
+    y = (byte) (x+y+1);
+    printi(y);
+    y = (byte) (y + 255);
+    printi(y);
+}

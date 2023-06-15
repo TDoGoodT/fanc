@@ -1,0 +1,10 @@
+bool printHelloAndReturnTrue() {
+    print("Hello");
+    return true;
+}
+
+void main() {
+    if (printHelloAndReturnTrue() or printHelloAndReturnTrue()) {
+        print("World");
+    }
+}

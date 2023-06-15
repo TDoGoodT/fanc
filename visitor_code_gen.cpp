@@ -151,13 +151,7 @@ void CodeGenVisitor::visitNMarker(NMarkerNode &node) {
 }
 
 void CodeGenVisitor::visitMMarker(MMarkerNode &node) {
-	auto buffer_itr = buffer.buffer.rbegin();
-	while (buffer_itr != buffer.buffer.rend() && buffer_itr->find(";") != std::string::npos) {
-		buffer_itr++;
-	}
-	if (buffer_itr != buffer.buffer.rend() && buffer_itr->find("br label") == std::string::npos) {
-		buffer.emit("br label %label_" + to_string(buffer.labelCounter));
-	}
+	buffer.emit("br label %label_" + to_string(buffer.labelCounter));
 	node.label = buffer.genLabel();
 }
 
@@ -252,7 +246,7 @@ void CodeGenVisitor::visitBoolExpr(BoolExprNode &node) {
 
 void CodeGenVisitor::visitFormals(FormalsNode &node) {
 	auto current_function = symbol_table.getAllFuncs().back();
-	std::string func_decl_str("define " + current_function.type.getLlvmType() + " @" + current_function.name + "(");
+	std::string func_decl_str("define " + current_function.type.getLlvmType() + " @" + current_function.full_name + "(");
 	auto formal_list_node = current_function.formals.getFormalDecls();
 	if (formal_list_node != nullptr) {
 		auto args = formal_list_node->getFormalDecls();
@@ -294,15 +288,25 @@ void CodeGenVisitor::visitFuncDecl(FuncDeclNode &node) {
 
 void CodeGenVisitor::visitCallStatement(CallStatementNode &node) {
 	auto func = symbol_table.getFuncSymbol(node.getId(), node.getArgs());
-	std::string call_str = "call " + func->type.getLlvmType() + " @" + func->name;
+	std::string call_str = "call " + func->type.getLlvmType() + " @" + func->full_name;
 	auto args = node.getArgs()->getExprs();
 	if (!args.empty()) {
+		auto func_args = func->formals.getFormalDecls()->getFormalDecls();
 		std::vector<std::string> string_list(args.size());
-		auto getLabelFn = [](const ExprNode *expr) { return expr->getLlvmType() + " %" + expr->place; };
+		auto getLabelFn = [&func_args, &args, this](int i) {
+			if (args[i]->expr_type == Types::BYTE_T && func_args[i]->getType()->getType() == Types::INT_T) {
+				auto new_place = buffer.newTemp();
+				buffer.emit("%" + new_place + " = zext i8 %" + args[i]->place + " to i32");
+				return "i32 %" + new_place;
+			}
+			return func_args[i]->getType()->getLlvmType() + " %" + args[i]->place;
+		};
 		auto addCommaFn = [](const std::string &a, const std::string &b) {
 			if (a.empty()) { return b; } else { return a + ", " + b; }
 		};
-		std::transform(args.begin(), args.end(), string_list.begin(), getLabelFn);
+		auto range = vector<int>(args.size());
+		std::iota(range.begin(), range.end(), 0);
+		std::transform(range.begin(), range.end(), string_list.begin(), getLabelFn);
 		auto args_str = std::accumulate(string_list.begin(), string_list.end(), std::string(), addCommaFn);
 		call_str += "(" + args_str + ")";
 	}
@@ -311,22 +315,38 @@ void CodeGenVisitor::visitCallStatement(CallStatementNode &node) {
 
 void CodeGenVisitor::visitCallExpr(CallExprNode &node) {
 	auto func = symbol_table.getFuncSymbol(node.getId(), node.getArgs());
-	std::string call_str = "call " + func->type.getLlvmType() + " @" + func->name;
-	auto args = node.getArgs()->getExprs();
-	if (args.size() > 1) {
+	std::string call_str = "call " + func->type.getLlvmType() + " @" + func->full_name;
+	auto args_node = node.getArgs();
+	if (args_node && !args_node->getExprs().empty()) {
+		auto args = args_node->getExprs();
+		auto func_args = func->formals.getFormalDecls()->getFormalDecls();
 		std::vector<std::string> string_list(args.size());
-		auto getLabelFn = [](const ExprNode *expr) { return expr->getLlvmType() + " %" + expr->place; };
+		auto getLabelFn = [&func_args, &args, this](int i) {
+			if (args[i]->expr_type == Types::BYTE_T && func_args[i]->getType()->getType() == Types::INT_T) {
+				auto new_place = buffer.newTemp();
+				buffer.emit("%" + new_place + " = zext i8 %" + args[i]->place + " to i32");
+				return "i32 %" + new_place;
+			}
+			return func_args[i]->getType()->getLlvmType() + " %" + args[i]->place;
+		};
 		auto addCommaFn = [](const std::string &a, const std::string &b) {
 			if (a.empty()) { return b; } else { return a + ", " + b; }
 		};
-		std::transform(args.begin(), args.end(), string_list.begin(), getLabelFn);
+		auto range = vector<int>(args.size());
+		std::iota(range.begin(), range.end(), 0);
+		std::transform(range.begin(), range.end(), string_list.begin(), getLabelFn);
 		auto args_str = std::accumulate(string_list.begin(), string_list.end(), std::string(), addCommaFn);
 		call_str += "(" + args_str + ")";
-	} else if (args.size() == 1) {
-		call_str += "(" + args[0]->getLlvmType() + " %" + args[0]->place + ")";
+	} else {
+		call_str += "()";
 	}
 	node.place = buffer.newTemp();
 	buffer.emit("%" + node.place + " = " + call_str);
+	if (node.expr_type == Types::BOOL_T) {
+		auto index = buffer.emit("br i1 %" + node.place + " , label @ , label @");
+		node.true_list = CodeBuffer::makelist({index, BranchLabelIndex::FIRST});
+		node.false_list = CodeBuffer::makelist({index, BranchLabelIndex::SECOND});
+	}
 }
 
 

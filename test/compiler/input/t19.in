@@ -1,0 +1,10 @@
+override byte foo(int x) {
+    return (byte)x-1b;
+}
+override byte foo(byte x, int y) {
+    return (byte)(x-y);
+}
+
+void main() {
+    printi(foo(1));
+}

@@ -8,7 +8,7 @@
 #include "parser.tab.hpp"
 #include "bp.hpp"
 #include "hw3_output.hpp"
-#define DEBUG 1
+#define DEBUG 0
 #define ACCEPT(node) do { \
     auto root = node; \
     if(DEBUG) { \

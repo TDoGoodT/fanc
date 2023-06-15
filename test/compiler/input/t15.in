@@ -23,13 +23,18 @@ int modulo(int a, int ab) {
     }
     return tmpa;
 }
-int gcd(int a, int ab) {
-    while (ab != 0) {
-        int temp = ab;
-        temp = modulo(a, ab);
-        a = temp;
+int gcd(int a, int c) {
+    int tmpa = a;
+    int tmpc = c;
+    while (tmpa != tmpc) {
+        if (tmpa > tmpc) {
+            tmpa = subtract(tmpa, tmpc);
+        } else {
+            tmpc = subtract(tmpc, tmpa);
+        }
     }
-    return a;
+    return tmpa;
+
 }
 
 void main() {

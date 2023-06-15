@@ -24,8 +24,7 @@ test_cases = get_test_cases('test/compiler/input', 'test/compiler/output',
                             'test/compiler/programs', 'test/compiler/expected')
 
 
-@pytest.mark.parametrize("program_file, output_file, expected_file, input_file", test_cases,
-                         ids=[input_file.split("/")[-1] for _, _, _, input_file in test_cases])
+@pytest.mark.parametrize("program_file, output_file, expected_file, input_file", test_cases, ids=[input_file.split("/")[-1] for _, _, _, input_file in test_cases])
 def test_compiler(program_file, output_file, expected_file, input_file):
     # Compile the program using the compiler_path
     compile_command = f'{compiler_path} < {input_file} > {program_file}'

@@ -12,6 +12,7 @@
 
 class WhileContext {
 	int counter;
+	std::vector<pair<int, BranchLabelIndex>> lastLabels;
 	std::vector<pair<int, BranchLabelIndex>> breakLabels;
 public:
 	WhileContext() : counter(0) {}
@@ -29,10 +30,11 @@ public:
 	}
 
 	std::vector<pair<int, BranchLabelIndex>> getBreaks() {
-		return breakLabels;
+		return lastLabels;
 	}
 
 	void exitWhile() {
+		lastLabels = breakLabels;
 		breakLabels.clear();
 		counter--;
 	}
@@ -52,19 +54,27 @@ public:
 																							 offset(offset),
 																							 label(label) {}
 };
-
+static inline string to_string(const std::vector<std::string> &strings) {
+	std::string result;
+	for (auto &str: strings) {
+		result += str + "_";
+	}
+	return result;
+}
 class FuncSymbol : public Symbol {
 public:
 	const std::string name;
 	const TypeNode type;
 	const FormalsNode formals;
 	const bool override;
+	std::string full_name;
 
-	FuncSymbol(const std::string &name, const TypeNode &type, const FormalsNode &formals, const bool override) : name(
-			name), type(type),
-																												 formals(formals),
-																												 override(
-																														 override) {}
+	FuncSymbol(const std::string &name, const TypeNode &type, const FormalsNode &formals, const bool override) :
+			name(name), type(type), formals(formals), override(override), full_name(name) {
+		if (override)
+			full_name = name + "_" + to_string(formals.prettyStrings()) + "_override";
+
+	}
 };
 
 typedef std::deque<IdSymbol> Scope;
@@ -251,10 +261,10 @@ public:
 		return nullptr;
 	}
 
-	std::vector<IdSymbol *> getIdSymbols(std::string id) {
+	std::vector<IdSymbol *> getIdSymbols(const std::string &id) {
 		std::vector<IdSymbol *> vector;
-		for (auto it = scopes_stack.rbegin(); it != scopes_stack.rend(); ++it) {
-			for (auto &symbol: *it) {
+		for (auto &scope: scopes_stack) {
+			for (auto &symbol: scope) {
 				if (symbol.name == id) {
 					vector.push_back(&symbol);
 				}

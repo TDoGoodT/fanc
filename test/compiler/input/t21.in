@@ -1,0 +1,12 @@
+void main(){
+    int x = 10;
+    while(true) {
+        printi(x);
+        x = x - 1;
+        if (x == 0) {
+            break;
+        }
+        continue;
+        x = 100;
+    }
+}

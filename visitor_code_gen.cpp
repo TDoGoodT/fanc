@@ -167,7 +167,8 @@ void CodeGenVisitor::visitIf(IfNode &node) {
 }
 
 void CodeGenVisitor::visitWhile(WhileNode &node) {
-	buffer.bpatch(node.getBlock()->next_list, node.getMMarker1()->label);
+	auto next_list = CodeBuffer::merge(context.getContinues(), node.getBlock()->next_list);
+	buffer.bpatch(next_list, node.getMMarker1()->label);
 	buffer.bpatch(node.getCondition()->true_list, node.getMMarker2()->label);
 	node.next_list = CodeBuffer::merge(node.getCondition()->false_list, context.getBreaks());
 	buffer.emit("br label %" + node.getMMarker1()->label);
@@ -393,7 +394,7 @@ void CodeGenVisitor::visitBreak(BreakNode &node) {
 
 void CodeGenVisitor::visitContinue(ContinueNode &node) {
 	auto index = buffer.emit("br label @");
-	node.next_list = CodeBuffer::makelist({index, BranchLabelIndex::FIRST});
+	context.addContinue(index);
 }
 
 void CodeGenVisitor::visitExprList(ExprListNode &node) {

@@ -12,8 +12,10 @@
 
 class WhileContext {
 	int counter;
-	std::vector<pair<int, BranchLabelIndex>> lastLabels;
-	std::vector<pair<int, BranchLabelIndex>> breakLabels;
+	std::vector<std::vector<pair<int, BranchLabelIndex>>> breakLabels;
+	std::vector<std::vector<pair<int, BranchLabelIndex>>> continueLabels;
+	std::vector<pair<int, BranchLabelIndex>> lastBreaks;
+	std::vector<pair<int, BranchLabelIndex>> lastContinues;
 public:
 	WhileContext() : counter(0) {}
 
@@ -23,19 +25,32 @@ public:
 
 	void enterWhile() {
 		counter++;
+		breakLabels.emplace_back();
+		continueLabels.emplace_back();
 	}
 
 	void addBreak(int index) {
-		breakLabels.emplace_back(index, BranchLabelIndex::FIRST);
+		breakLabels.back().emplace_back(index, BranchLabelIndex::FIRST);
+	}
+
+	void addContinue(int index) {
+		continueLabels.back().emplace_back(index, BranchLabelIndex::FIRST);
 	}
 
 	std::vector<pair<int, BranchLabelIndex>> getBreaks() {
-		return lastLabels;
+		return lastBreaks;
 	}
 
+	std::vector<pair<int, BranchLabelIndex>> getContinues() {
+		return lastContinues;
+	}
+
+
 	void exitWhile() {
-		lastLabels = breakLabels;
-		breakLabels.clear();
+		lastBreaks = breakLabels.back();
+		lastContinues = continueLabels.back();
+		breakLabels.pop_back();
+		continueLabels.pop_back();
 		counter--;
 	}
 };

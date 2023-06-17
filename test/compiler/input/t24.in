@@ -1,0 +1,18 @@
+bool getTrue() {
+    return true;
+}
+bool getFalse() {
+    return false;
+}
+
+void main(){
+    bool shouldBeTrue = getTrue() or getFalse();
+    bool shouldBeFalse = getTrue() and getFalse();
+    if (shouldBeFalse) {
+        print("error");
+    } else {
+        if (shouldBeTrue) {
+            print("We are ok");
+        }
+    }
+}

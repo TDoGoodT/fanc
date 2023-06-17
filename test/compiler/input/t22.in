@@ -1,0 +1,23 @@
+void main(){
+    int x = 10;
+    int y = 10;
+    while(true) {
+        print("__x__");
+        printi(x);
+        print("__y__");
+        printi(y);
+        while (y > 0) {
+            if (y < 5) {
+                break;
+            } else {
+                y = y - 2;
+            }
+        }
+        x = x - 1;
+        if (x == 0) {
+            break;
+        }
+        continue;
+        x = 100;
+    }
+}

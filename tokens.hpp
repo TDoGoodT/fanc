@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <string>
 
-enum error_t {
+enum error_type {
 	INVALID_STRING = -1,
 	UNKOWN_TOKEN = -2,
 	UNCLOSED_STRING = -3

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "visitor.hpp"
+#include <algorithm>
 
 
 void CodeGenVisitor::visitProgram(ProgramNode &node) {

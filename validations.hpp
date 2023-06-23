@@ -7,6 +7,7 @@
 
 #include "nodes.hpp"
 #include "symbol_table.hpp"
+#include <algorithm>
 
 static inline void validateNotMain(FuncDeclNode &node) {
 	if (node.getId()->getId() == "main") {

@@ -17,6 +17,7 @@ enum Types {
 	BYTE_T,
 	BOOL_T,
 	STRING_T,
+    NOT_SET
 };
 
 static bool types_match(Types from, Types to, bool explicit_cast = false) {

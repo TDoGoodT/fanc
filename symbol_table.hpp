@@ -7,6 +7,7 @@
 
 #include <utility>
 #include <deque>
+#include <algorithm>
 
 #include "nodes.hpp"
 
@@ -116,12 +117,6 @@ class SymbolTable {
 		if (formals) {
 			addIdSymbolFromFormals(formals);
 		}
-		current_function = {
-				TypeNode(Types::VOID_T),
-				"",
-				FormalsNode(),
-				false
-		};
 	}
 
 	void addIdSymbolFromFormals(const FormalListNode *formal_decls) {
@@ -136,8 +131,6 @@ class SymbolTable {
 	void addFuncSymbol(const std::string &name, const TypeNode &type, const FormalsNode &formals, bool override) {
 		FuncSymbol symbol(name, type, formals, override);
 		funcs.emplace_back(symbol);
-		auto &current_scope = scopes_stack.back();
-		const FormalListNode *formal_decls = formals.getFormalDecls();
 	}
 
 	void addDefaultFunctions() {
@@ -184,15 +177,15 @@ public:
 	}
 
 	void setCurrentRetType(const TypeNode &type) {
-		current_function.type = type;
+        current_function.type = type;
 	}
 
 	Types getCurrentRetType() const {
-		return funcs.back().type.getType();
+		return current_function.type.getType();
 	}
 
 	bool getCurrentOverride() const {
-		return funcs.back().override;
+		return current_function.override;
 	}
 
 	void setCurrentFuncId(const std::string &name) {
@@ -209,12 +202,7 @@ public:
 	}
 
 	bool isOverride(const std::string &id) {
-		for (auto &func: funcs) {
-			if (func.name == id && func.override) {
-				return true;
-			}
-		}
-		return false;
+        return std::any_of(funcs.begin(), funcs.end(), [id](const FuncSymbol &func) { return func.name == id && func.override; });
 	}
 
 	void addIdSymbol(const std::string &name, const TypeNode &type) {
@@ -224,7 +212,7 @@ public:
 		scope.emplace_back(symbol);
 	}
 
-	std::vector<FuncSymbol *> getFuncsByName(std::string id) {
+	std::vector<FuncSymbol *> getFuncsByName(const std::string& id) {
 		std::vector<FuncSymbol *> vector;
 		for (auto &func: funcs) {
 			if (func.name == id) {
@@ -234,7 +222,7 @@ public:
 		return vector;
 	}
 
-	FuncSymbol *getFuncSymbol(std::string id, ExprListNode *args) {
+	FuncSymbol *getFuncSymbol(const std::string& id, ExprListNode *args) {
 		for (auto &func: funcs) {
 			if (func.name == id) {
 				if (func.formals.getFormalDecls() == nullptr && args == nullptr) {
@@ -265,7 +253,7 @@ public:
 		return nullptr;
 	}
 
-	IdSymbol *firstIdSymbol(std::string id) {
+	IdSymbol *firstIdSymbol(const std::string& id) {
 		for (auto it = scopes_stack.rbegin(); it != scopes_stack.rend(); ++it) {
 			for (auto &symbol: *it) {
 				if (symbol.name == id) {

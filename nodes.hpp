@@ -39,7 +39,7 @@ public:
 
 class MMarkerNode : public Node {
 public:
-	std::string label = "";
+	std::string label;
 	void accept(class ParserVisitor &visitor) override;
 };
 
@@ -132,19 +132,7 @@ public:
 		return formalDecls;
 	}
 
-	std::string prettyString() const {
-		std::string str;
-		for (auto &formal: formalDecls) {
-			str += formal->getType()->prettyString();
-			str += " ";
-			str += formal->getId();
-			str += ", ";
-		}
-		str.pop_back();
-		return str;
-	}
-
-	void accept(class ParserVisitor &visitor) override;
+    void accept(class ParserVisitor &visitor) override;
 };
 
 class FormalsNode : public Node {
@@ -189,7 +177,10 @@ public:
 
 class StatementNode : public Node {
 public:
-	std::vector<pair<int, BranchLabelIndex>> next_list{};
+	std::vector<pair<int, BranchLabelIndex>> next_list;
+    StatementNode() {
+        next_list = std::vector<pair<int, BranchLabelIndex>>();
+    }
 	void accept(class ParserVisitor &visitor) override;
 };
 
@@ -202,7 +193,7 @@ private:
 public:
 	// statements mMarker statement { ALLOCATE_AND_ACCEPT($$, StatementsNode($1, $2, $3)); }
 	explicit StatementsNode(StatementsNode *statements, MMarkerNode *mMarker, StatementNode *statement) : mMarker(mMarker), statement(statement) , statements(statements) {}
-	explicit StatementsNode(StatementNode *statement) : statement(statement) {}
+	explicit StatementsNode(StatementNode *statement) : statement(statement) , statements(nullptr) , mMarker(nullptr) {}
 
 	StatementsNode *getStatements() const {
 		return statements;
@@ -234,7 +225,7 @@ public:
 class OverrideNode : public Node {
 	bool override;
 public:
-	OverrideNode(bool override) : override(override) {}
+	explicit OverrideNode(bool override) : override(override) {}
 
 	void accept(class ParserVisitor &visitor) override;
 
@@ -306,8 +297,8 @@ class ExprNode : public Node {
 public:
 	std::vector<std::pair<int, BranchLabelIndex>> true_list{};
 	std::vector<std::pair<int, BranchLabelIndex>> false_list{};
-	std::string place = "";
-	Types expr_type;
+	std::string place;
+	Types expr_type = NOT_SET;
 
 	std::string getLlvmType() const {
 		switch (expr_type) {
@@ -416,7 +407,7 @@ private:
 public:
 	explicit StringNode(char *str) : StringNode(std::string(str)) {}
 
-	explicit StringNode(std::string str) : str(str.substr(1, str.size() - 2)) {}
+	explicit StringNode(const std::string& str) : str(str.substr(1, str.size() - 2)) {}
 
 	const std::string &getStr() const {
 		return str;
@@ -542,7 +533,7 @@ public:
 		return op;
 	}
 
-	const std::string getLlvmOp() const {
+	std::string getLlvmOp() const {
 		if (op == "==") {
 			return "eq";
 		} else if (op == "!=") {
@@ -599,10 +590,10 @@ class IfNode : public StatementNode {
 private:
 	BoolExprNode *condition;
 	StatementNode *ifBlock;
-	StatementNode *elseBlock;
+	StatementNode *elseBlock{};
 	MMarkerNode *mMarkerNode;
-	NMarkerNode *nMarkerNode;
-	MMarkerNode *mMarkerNode2;
+	NMarkerNode *nMarkerNode{};
+	MMarkerNode *mMarkerNode2{};
 
 public:
 

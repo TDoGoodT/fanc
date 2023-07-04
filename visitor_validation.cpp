@@ -144,19 +144,22 @@ void ValidationVisitor::visitFormals(FormalsNode &node) {
 	}
 }
 void ValidationVisitor::visitFuncId(FuncIdNode &node) {
-	if (!symbolTable.getCurrentOverride()) {
-		validateFuncDoesntExist(node.getId(), symbolTable);
-	}
+	if (node.getId() == "main" && symbolTable.getCurrentOverride()) {
+        output::errorMainOverride(yylineno);
+        exit(1);
+    }
+    if (!symbolTable.getFuncsByName(node.getId()).empty()) {
+        validateMultipleDeceleration(node.getId(), symbolTable);
+	} else if (!symbolTable.getCurrentOverride()) {
+        validateFuncDoesntExist(node.getId(), symbolTable);
+    }
 }
 void ValidationVisitor::visitFuncDecl(FuncDeclNode &node) {
 	if (node.isOverride()) {
-		validateNotMain(node);
 		auto same_id_funcs = symbolTable.getFuncsByName(node.getId()->getId());
 		if (same_id_funcs.empty()) return;
-		validateIsOverride(node, symbolTable);
+        validateMultipleDeceleration(node.getId()->getId(), symbolTable);
 		validatePrototypeMatch(node, same_id_funcs.back());
-	} else {
-		validateIsntOverride(node, symbolTable);
 	}
 }
 

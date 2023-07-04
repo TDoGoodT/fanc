@@ -11,3 +11,8 @@ cmake-build-debug/
 /poetry.lock
 /.vscode/settings.json
 /bin/hw3
+.DS_Store
+bin
+hw5
+parser.tab.cpp 
+parser.tab.hpp

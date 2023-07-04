@@ -1,0 +1,13 @@
+override int func(int x)
+{
+    return 1;
+}
+
+override int func(byte x)
+{
+    return 1b;
+}
+
+void main() {
+    func(1b);
+}

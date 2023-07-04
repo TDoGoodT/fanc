@@ -176,7 +176,7 @@ void CodeGenVisitor::visitWhile(WhileNode &node) {
 }
 
 void CodeGenVisitor::visitStatements(StatementsNode &node) {
-	if (node.getStatements() != nullptr) {
+	if (node.getStatements() != nullptr && !node.getStatements()->next_list.empty()) {
 		buffer.bpatch(node.getStatements()->next_list, node.getMMarker()->label);
 	}
 	node.next_list = node.getStatement()->next_list;
@@ -252,7 +252,7 @@ void CodeGenVisitor::visitFormals(FormalsNode &node) {
 	auto formal_list_node = current_function.formals.getFormalDecls();
 	if (formal_list_node != nullptr) {
 		auto args = formal_list_node->getFormalDecls();
-		if (args.size() > 0) {
+		if (!args.empty()) {
 			std::vector<std::string> string_list(args.size());
 			std::transform(args.begin(), args.end(), string_list.begin(),
 						   [](const FormalDeclNode *expr) { return expr->getType()->getLlvmType(); });

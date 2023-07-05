@@ -5,6 +5,25 @@
 #include "nodes.hpp"
 #include "visitor.hpp"
 
+std::string type_to_string(Types type) {
+	switch (type) {
+		case Types::BYTE_T:
+			return "i8";
+		case Types::INT_T:
+			return "i32";
+		case Types::BOOL_T:
+			return "i1";
+		case Types::VOID_T:
+			return "void";
+		case Types::STRING_T:
+			return "i8*";
+		default:
+			return "unknown";
+	}
+}
+std::string TypeNode::getLlvmType() const {
+	return type_to_string(type);
+}
 void FormalDeclNode::accept(ParserVisitor &visitor) {
 	visitor.visitFormalDecl(*this);
 }

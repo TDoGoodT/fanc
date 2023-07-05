@@ -27,7 +27,7 @@ public:
 };
 
 class ElseLabelNode : public Node {
-	public:
+public:
 	void accept(class ParserVisitor &visitor) override;
 };
 
@@ -40,12 +40,14 @@ public:
 class MMarkerNode : public Node {
 public:
 	std::string label;
+
 	void accept(class ParserVisitor &visitor) override;
 };
 
 class NMarkerNode : public Node {
 public:
 	std::vector<pair<int, BranchLabelIndex>> next_list{};
+
 	void accept(class ParserVisitor &visitor) override;
 };
 
@@ -58,22 +60,9 @@ public:
 	Types getType() const {
 		return type;
 	}
-	std::string getLlvmType() const {
-		switch (type) {
-			case Types::BYTE_T:
-				return "i8";
-			case Types::INT_T:
-				return "i32";
-			case Types::BOOL_T:
-				return "i1";
-			case Types::VOID_T:
-				return "void";
-			case Types::STRING_T:
-				return "i8*";
-			default:
-				return "unknown";
-		}
-	}
+
+	std::string getLlvmType() const;
+
 	std::string prettyString() const {
 		switch (type) {
 			case Types::BYTE_T:
@@ -132,7 +121,7 @@ public:
 		return formalDecls;
 	}
 
-    void accept(class ParserVisitor &visitor) override;
+	void accept(class ParserVisitor &visitor) override;
 };
 
 class FormalsNode : public Node {
@@ -178,22 +167,26 @@ public:
 class StatementNode : public Node {
 public:
 	std::vector<pair<int, BranchLabelIndex>> next_list;
-    StatementNode() {
-        next_list = std::vector<pair<int, BranchLabelIndex>>();
-    }
+
+	StatementNode() {
+		next_list = std::vector<pair<int, BranchLabelIndex>>();
+	}
+
 	void accept(class ParserVisitor &visitor) override;
 };
 
 class StatementsNode : public StatementNode {
 private:
-	StatementsNode* statements;
+	StatementsNode *statements;
 	MMarkerNode *mMarker;
 	StatementNode *statement;
 
 public:
 	// statements mMarker statement { ALLOCATE_AND_ACCEPT($$, StatementsNode($1, $2, $3)); }
-	explicit StatementsNode(StatementsNode *statements, MMarkerNode *mMarker, StatementNode *statement) : mMarker(mMarker), statement(statement) , statements(statements) {}
-	explicit StatementsNode(StatementNode *statement) : statement(statement) , statements(nullptr) , mMarker(nullptr) {}
+	explicit StatementsNode(StatementsNode *statements, MMarkerNode *mMarker, StatementNode *statement) : mMarker(
+			mMarker), statement(statement), statements(statements) {}
+
+	explicit StatementsNode(StatementNode *statement) : statement(statement), statements(nullptr), mMarker(nullptr) {}
 
 	StatementsNode *getStatements() const {
 		return statements;
@@ -206,6 +199,7 @@ public:
 	StatementNode *getStatement() const {
 		return statement;
 	}
+
 	void accept(class ParserVisitor &visitor) override;
 };
 
@@ -407,7 +401,7 @@ private:
 public:
 	explicit StringNode(char *str) : StringNode(std::string(str)) {}
 
-	explicit StringNode(const std::string& str) : str(str.substr(1, str.size() - 2)) {}
+	explicit StringNode(const std::string &str) : str(str.substr(1, str.size() - 2)) {}
 
 	const std::string &getStr() const {
 		return str;
@@ -416,6 +410,7 @@ public:
 	void accept(class ParserVisitor &visitor) override;
 
 };
+
 class BoolExprNode : public ExprNode {
 private:
 	ExprNode *condition;
@@ -472,7 +467,7 @@ private:
 	ExprNode *right;
 public:
 	explicit AndNode(ExprNode *left, MMarkerNode *mMarker, ExprNode *right) : left(left), mMarker(mMarker),
-																			 right(right) {}
+																			  right(right) {}
 
 	ExprNode *getLeft() const {
 		return left;
@@ -496,7 +491,7 @@ private:
 	ExprNode *right;
 public:
 	explicit OrNode(ExprNode *left, MMarkerNode *mMarker, ExprNode *right) : left(left), mMarker(mMarker),
-																		   right(right) {}
+																			 right(right) {}
 
 	ExprNode *getLeft() const {
 		return left;
@@ -598,9 +593,16 @@ private:
 public:
 
 	// if LPAREN boolExpr RPAREN mMarker statement { ALLOCATE_AND_ACCEPT($$, IfNode($3, $5, $6)); }
-	IfNode(BoolExprNode *condition, MMarkerNode *mMarkerNode, StatementNode *ifBlock) : condition(condition), ifBlock(ifBlock), mMarkerNode(mMarkerNode) {}
+	IfNode(BoolExprNode *condition, MMarkerNode *mMarkerNode, StatementNode *ifBlock) : condition(condition),
+																						ifBlock(ifBlock),
+																						mMarkerNode(mMarkerNode) {}
+
 	// if LPAREN boolExpr RPAREN mMarker statement nMarker else mMarker statement { ALLOCATE_AND_ACCEPT($$, IfNode($3, $5, $6, $7, $9, $10)); }
-	IfNode(BoolExprNode *condition, MMarkerNode *mMarkerNode, StatementNode *ifBlock, NMarkerNode *nMarkerNode, MMarkerNode *mMarkerNode2, StatementNode *elseBlock) : condition(condition), ifBlock(ifBlock), mMarkerNode(mMarkerNode), elseBlock(elseBlock), nMarkerNode(nMarkerNode), mMarkerNode2(mMarkerNode2) {}
+	IfNode(BoolExprNode *condition, MMarkerNode *mMarkerNode, StatementNode *ifBlock, NMarkerNode *nMarkerNode,
+		   MMarkerNode *mMarkerNode2, StatementNode *elseBlock) : condition(condition), ifBlock(ifBlock),
+																  mMarkerNode(mMarkerNode), elseBlock(elseBlock),
+																  nMarkerNode(nMarkerNode),
+																  mMarkerNode2(mMarkerNode2) {}
 
 	BoolExprNode *getCondition() const {
 		return condition;
@@ -638,7 +640,8 @@ private:
 	MMarkerNode *mMarker2;
 public:
 	// while mMarker LPAREN boolExpr RPAREN mMarker statement { ALLOCATE_AND_ACCEPT($$, WhileNode($2, $4, $6, $7)); }
-	WhileNode(MMarkerNode *mMarker1, BoolExprNode *condition, MMarkerNode *mMarker2, StatementNode *block) : condition(condition), block(block), mMarker1(mMarker1), mMarker2(mMarker2) {}
+	WhileNode(MMarkerNode *mMarker1, BoolExprNode *condition, MMarkerNode *mMarker2, StatementNode *block) : condition(
+			condition), block(block), mMarker1(mMarker1), mMarker2(mMarker2) {}
 
 	BoolExprNode *getCondition() const {
 		return condition;
@@ -763,8 +766,6 @@ public:
 
 	void accept(class ParserVisitor &visitor) override;
 };
-
-
 
 
 #endif //FANC_ANALYZER_PARSER_H

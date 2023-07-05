@@ -29,14 +29,18 @@ test_cases = get_test_cases('test/compiler/input', 'test/compiler/output',
 def test_compiler(program_file, output_file, expected_file, input_file):
     # Compile the program using the compiler_path
     compile_command = f'{compiler_path} < {input_file} > {program_file}'
-    subprocess.run(compile_command, shell=True, check=True)
+    process = subprocess.run(compile_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    assert process.returncode == 0, f"Command {compile_command} failed with exit code{process.returncode}\n" \
+                                    f"Stdout: {process.stdout.decode()}\n" \
+                                    f"Stderr: {process.stderr.decode()}\n"
 
     # Execute the compiled program using lli
     execute_command = f'lli {program_file} > {output_file}'
-    try:
-        subprocess.run(execute_command, shell=True, check=True)
-    except subprocess.CalledProcessError:
-        pytest.fail(f'Execution of {program_file} failed')
+    process = subprocess.run(execute_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert process.returncode == 0, f"Command {execute_command} failed with exit code{process.returncode}\n" \
+                                    f"Stdout: {process.stdout.decode()}\n" \
+                                    f"Stderr: {process.stderr.decode()}\n"
 
     # Read the expected output from expected_file
 
@@ -74,19 +78,17 @@ hw3_tests = get_hw3_test_cases('test/compiler/input', 'test/compiler/output',
 def test_compiler_errors(program_file, output_file, expected_file, input_file):
     # Compile the program using the compiler_path
     compile_command = f'{compiler_path} < {input_file} > {program_file}'
-    compile_failed = False
-    try:
-        subprocess.run(compile_command, shell=True, check=True)
-    except subprocess.CalledProcessError:
-        compile_failed = True
+    process = subprocess.run(compile_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    compile_failed = process.returncode != 0
 
     # Execute the compiled program using lli
     if not compile_failed:
         execute_command = f'lli {program_file} > {output_file}'
-        try:
-            subprocess.run(execute_command, shell=True, check=True)
-        except subprocess.CalledProcessError:
-            pytest.fail(f'Execution of {program_file} failed')
+        process = subprocess.run(execute_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        assert process.returncode == 0, f"Command {execute_command} failed with exit code{process.returncode}\n" \
+                                        f"Stdout: {process.stdout.decode()}\n" \
+                                        f"Stderr: {process.stderr.decode()}\n"
+
     if compile_failed:
         output_file = program_file
 

@@ -1,0 +1,6 @@
+void main(){
+    int x = 10b;
+    byte y = (byte)x;
+    int  z = x;
+    printi(z);
+}

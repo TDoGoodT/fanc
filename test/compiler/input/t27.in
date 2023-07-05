@@ -1,0 +1,4 @@
+void main(){
+    int x = 10b;
+    printi((byte)x);
+}

@@ -1,37 +1,18 @@
 //
 // Created by Snir Bachar on 06/06/2023.
 //
-#include <iostream>
 #include <numeric>
 #include <string>
 #include <vector>
 #include "visitor.hpp"
+#include "llvm_blocks.hpp"
 #include <algorithm>
 
+using namespace llvm_blocks;
 
 void CodeGenVisitor::visitProgram(ProgramNode &node) {
-	string globals[] = {
-			"declare i32 @printf(i8*, ...)",
-			"declare void @exit(i32)",
-			R"(@.int_specifier = constant [4 x i8] c"%d\0A\00")",
-			R"(@.str_specifier = constant [4 x i8] c"%s\0A\00")",
-			R"(@.zero_div_err = constant [24 x i8] c"Error division by zero\0A\00")"};
-	for (auto &glob: globals) {
-		buffer.emitGlobal(glob);
-	}
-	buffer.emitGlobal("define void @printi(i32) {");
-	buffer.emitGlobal("\t%spec_ptr = getelementptr [4 x i8], [4 x i8]* @.int_specifier, i32 0, i32 0");
-	buffer.emitGlobal(
-			"\tcall i32 (i8*, ...) @printf(i8* getelementptr([4 x i8], [4 x i8]* @.int_specifier, i32 0, i32 0), i32 %0)");
-	buffer.emitGlobal("\tret void");
-	buffer.emitGlobal("}");
-	buffer.emitGlobal("define void @print(i8*) {");
-	buffer.emitGlobal("\t%spec_ptr = getelementptr [4 x i8], [4 x i8]* @.str_specifier, i32 0, i32 0");
-	buffer.emitGlobal(
-			"\tcall i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.str_specifier, i32 0, i32 0), i8* %0)");
-	buffer.emitGlobal("\tret void");
-	buffer.emitGlobal("}");
-
+	emit_program(buffer);
+	emit_main(buffer);
 	buffer.printGlobalBuffer();
 	buffer.printCodeBuffer();
 }
@@ -43,36 +24,35 @@ void CodeGenVisitor::visitBinOp(BinOpNode &node) {
 	auto right_place = node.getRight()->place;
 	if (node.getLeft()->expr_type == Types::BYTE_T) {
 		left_place = buffer.newTemp();
-		buffer.emit("%" + left_place + " = zext i8 %" + node.getLeft()->place + " to i32");
+		emit_zext(buffer, left_place, "i8", "i32", node.getLeft()->place);
 	}
 	if (node.getRight()->expr_type == Types::BYTE_T) {
 		right_place = buffer.newTemp();
-		buffer.emit("%" + right_place + " = zext i8 %" + node.getRight()->place + " to i32");
+		emit_zext(buffer, right_place, "i8", "i32", node.getRight()->place);
 	}
 	if (op == "/") {
 		string zero_div_var = buffer.newTemp();
-		buffer.emit("%" + zero_div_var + " = icmp eq i32 %" + right_place + ", 0");
-		int zero_div_index = buffer.emit("br i1 %" + zero_div_var + " , label @ , label @");
+		emit_icmp(buffer, zero_div_var, "eq", "i32", "%" + right_place, "0");
+		int zero_div_index = emit_br(buffer, zero_div_var, "@", "@");
 		auto exit_label = buffer.genLabel();
 		buffer.bpatch(CodeBuffer::makelist({zero_div_index, FIRST}), exit_label);
-		buffer.emit(
-				"call i32 (i8*, ...) @printf(i8* getelementptr([24 x i8], [24 x i8]* @.zero_div_err, i32 0, i32 0))");
-		buffer.emit("call void @exit(i32 0)");
-
-		buffer.emit("br label %label_" + to_string(buffer.labelCounter));
+		emit_call(buffer, "printf", "i32 (i8*, ...)",
+				  "i8* getelementptr([24 x i8], [24 x i8]* @.zero_div_err, i32 0, i32 0)");
+		emit_call(buffer, "exit", "void", "i32 0");
+		emit_br(buffer, "%label_" + to_string(buffer.labelCounter));
 		auto div_label = buffer.genLabel();
 		buffer.bpatch(CodeBuffer::makelist({zero_div_index, SECOND}), div_label);
-		buffer.emit("%" + node.place + " = sdiv i32 %" + left_place + ", %" + right_place);
+		emit_sdiv(buffer, node.place, "i32", left_place, right_place);
 	} else if (op == "*") {
-		buffer.emit("%" + node.place + " = mul i32 %" + left_place + ", %" + right_place);
+		emit_mul(buffer, node.place, "i32", left_place, right_place);
 	} else if (op == "+") {
-		buffer.emit("%" + node.place + " = add i32 %" + left_place + ", %" + right_place);
+		emit_add(buffer, node.place, "i32", left_place, right_place);
 	} else if (op == "-") {
-		buffer.emit("%" + node.place + " = sub i32 %" + left_place + ", %" + right_place);
+		emit_sub(buffer, node.place, "i32", left_place, right_place);
 	}
 	if (node.expr_type == Types::BYTE_T) {
 		auto tmp = buffer.newTemp();
-		buffer.emit("%" + tmp + " = trunc i32 %" + node.place + " to i8");
+		emit_trunc(buffer, tmp, "i32", "i8", node.place);
 		node.place = tmp;
 	}
 
@@ -81,26 +61,30 @@ void CodeGenVisitor::visitBinOp(BinOpNode &node) {
 void CodeGenVisitor::visitVarDecl(VarDeclNode &node) {
 
 	if (node.getExpr() == nullptr) {
-		buffer.emit("%" + symbol_table.getIdSymbols(node.getId()).back()->label + " = alloca i32");
-		buffer.emit("store "+node.getType()->getLlvmType()+" 0, i32* %" + symbol_table.getIdSymbols(node.getId()).back()->label);
+		emit_alloca(buffer, symbol_table.getIdSymbols(node.getId()).back()->label);
+		auto zero_var = buffer.newTemp();
+		emit_op(buffer, "add", zero_var, "i32", "0", "0");
+		emit_store(buffer, symbol_table.getIdSymbols(node.getId()).back()->label, zero_var, Types::INT_T);
 		return;
 	}
 	auto expr = node.getExpr();
-	if (node.getType()->getType() == Types::BOOL_T) {
-		expr->place = buffer.newTemp();
+	buffer.emit(";" + expr->getLlvmType() + " " + node.getType()->getLlvmType());
+	if (node.getType()->getType() == Types::BOOL_T && expr->expr_type == Types::BOOL_T) {
 		string true_label = buffer.genLabel();
-		buffer.emit("br label %label_" + to_string(buffer.labelCounter + 1) + "; true ");
+		emit_br(buffer, "%label_" + to_string(buffer.labelCounter + 1));
 		string false_label = buffer.genLabel();
-		buffer.emit("br label %label_" + to_string(buffer.labelCounter) + "; false ");
+		emit_br(buffer, "%label_" + to_string(buffer.labelCounter));
 		buffer.genLabel();
-		buffer.emit("%" + expr->place + " = phi i1 [1,%" + true_label + "], [0,%" + false_label + "]");
+		expr->place = buffer.newTemp();
+		emit_phi(buffer, expr->place, "i1", "1", true_label, "0", false_label);
 		buffer.bpatch(expr->true_list, true_label);
 		buffer.bpatch(expr->false_list, false_label);
+		auto new_place = buffer.newTemp();
+		emit_zext(buffer, new_place, "i1", "i32", expr->place);
+		expr->place = new_place;
 	}
-	buffer.emit("%" + symbol_table.getIdSymbols(node.getId()).back()->label + " = alloca " + node.getExpr()->getLlvmType());
-	buffer.emit(
-			"store "+ node.getExpr()->getLlvmType() +" %" + node.getExpr()->place + ", "+node.getExpr()->getLlvmType()+"* %" +
-			symbol_table.getIdSymbols(node.getId()).back()->label);
+	emit_alloca(buffer, symbol_table.getIdSymbols(node.getId()).back()->label);
+	emit_store(buffer, symbol_table.getIdSymbols(node.getId()).back()->label, expr->place, expr->expr_type);
 }
 
 void CodeGenVisitor::visitAssign(AssignNode &node) {
@@ -109,18 +93,18 @@ void CodeGenVisitor::visitAssign(AssignNode &node) {
 	if (expr->expr_type == Types::BOOL_T) {
 		expr->place = buffer.newTemp();
 		string trueLabel = buffer.genLabel();
-		int trueLine = buffer.emit("br label @; true ");
+		int trueLine = emit_br(buffer, "@");
 		string falseLabel = buffer.genLabel();
-		int falseLine = buffer.emit("br label @; false ");
+		int falseLine = emit_br(buffer, "@");
 		string nextLabel = buffer.genLabel();
-		buffer.emit("%" + expr->place + " = phi i32 [1,%" + trueLabel + "], [0,%" + falseLabel + "]");
+		emit_phi(buffer, expr->place, "i1", "1", trueLabel, "0", falseLabel);
 		buffer.bpatch(expr->true_list, trueLabel);
 		buffer.bpatch(expr->false_list, falseLabel);
 		buffer.bpatch(CodeBuffer::makelist({trueLine, FIRST}), nextLabel);
 		buffer.bpatch(CodeBuffer::makelist({falseLine, FIRST}), nextLabel);
 	}
-	buffer.emit(
-			"store "+expr->getLlvmType()+" %" + expr->place + ", "+expr->getLlvmType()+"* %" + symbol_table.getIdSymbols(node.getId()).back()->label);
+	auto id = symbol_table.getIdSymbols(node.getId()).back();
+	emit_store(buffer, id->label, expr->place, expr->expr_type);
 }
 
 void CodeGenVisitor::visitId(IdNode &node) {
@@ -128,14 +112,24 @@ void CodeGenVisitor::visitId(IdNode &node) {
 	if (id->offset >= 0) {
 		auto &ptr_name = id->label;
 		node.place = buffer.newTemp();
-		buffer.emit("%" + node.place + " = load "+node.getLlvmType()+", "+node.getLlvmType()+"* %" + ptr_name);
+		emit_load(buffer, ptr_name, node.place);
+		if (id->type.getType() == Types::BOOL_T) {
+			auto new_place = buffer.newTemp();
+			emit_trunc(buffer, new_place, "i32", "i1", node.place);
+			node.place = new_place;
+		}
+		if (id->type.getType() == Types::BYTE_T) {
+			auto new_place = buffer.newTemp();
+			emit_trunc(buffer, new_place, "i32", "i8", node.place);
+			node.place = new_place;
+		}
 	} else {
 		node.place = buffer.newTemp();
-		buffer.emit("%" + node.place + " = add " + id->type.getLlvmType() + " 0, %" + id->label);
+		emit_op(buffer, "add", node.place, id->type.getLlvmType(), "0", "%" + id->label);
 	}
 	if (id->type.getType() == Types::BOOL_T) {
 		node.expr_type = Types::BOOL_T;
-		auto index = buffer.emit("br i1 %" + node.place + ", label @, label @");
+		auto index = emit_br(buffer, node.place, "@", "@");
 		node.true_list.emplace_back(index, FIRST);
 		node.false_list.emplace_back(index, SECOND);
 	}
@@ -143,16 +137,16 @@ void CodeGenVisitor::visitId(IdNode &node) {
 
 void CodeGenVisitor::visitNum(NumNode &node) {
 	node.place = buffer.newTemp();
-	buffer.emit("%" + node.place + " = add "+node.getLlvmType()+" 0, " + std::to_string(node.getNum()));
+	emit_op(buffer, "add", node.place, node.getLlvmType(), "0", std::to_string(node.getNum()));
 }
 
 void CodeGenVisitor::visitNMarker(NMarkerNode &node) {
-	auto index = buffer.emit("br label @");
+	auto index = emit_br(buffer, "@");
 	node.next_list.emplace_back(index, BranchLabelIndex::FIRST);
 }
 
 void CodeGenVisitor::visitMMarker(MMarkerNode &node) {
-	buffer.emit("br label %label_" + to_string(buffer.labelCounter));
+	emit_br(buffer, "%label_" + to_string(buffer.labelCounter));
 	node.label = buffer.genLabel();
 }
 
@@ -172,7 +166,7 @@ void CodeGenVisitor::visitWhile(WhileNode &node) {
 	buffer.bpatch(next_list, node.getMMarker1()->label);
 	buffer.bpatch(node.getCondition()->true_list, node.getMMarker2()->label);
 	node.next_list = CodeBuffer::merge(node.getCondition()->false_list, context.getBreaks());
-	buffer.emit("br label %" + node.getMMarker1()->label);
+	emit_br(buffer, "%" + node.getMMarker1()->label);
 }
 
 void CodeGenVisitor::visitStatements(StatementsNode &node) {
@@ -180,7 +174,7 @@ void CodeGenVisitor::visitStatements(StatementsNode &node) {
 		buffer.bpatch(node.getStatements()->next_list, node.getMMarker()->label);
 	}
 	node.next_list = node.getStatement()->next_list;
-	auto index = buffer.emit("br label @");
+	auto index = emit_br(buffer, "@");
 	node.next_list.emplace_back(index, BranchLabelIndex::FIRST);
 }
 
@@ -191,14 +185,12 @@ void CodeGenVisitor::visitBlock(BlockNode &node) {
 void CodeGenVisitor::visitString(StringNode &node) {
 	auto &str = node.getStr();
 	node.place = "str_" + buffer.newTemp();
-	buffer.emit("%" + node.place + " = getelementptr [" + to_string(str.size() + 1) + " x i8], [" +
-				to_string(str.size() + 1) + " x i8]* @." + node.place + "_ptr, i32 0, i32 0");
-	buffer.emitGlobal(
-			"@." + node.place + "_ptr" + " = constant [" + to_string(str.size() + 1) + " x i8] c\"" + str + R"(\00")");
+	emit_getelementptr(buffer, node.place, "[" + to_string(str.size() + 1) + " x i8]", "@." + node.place + "_ptr");
+	emit_global_string(buffer, node.place + "_ptr", str);
 }
 
 void CodeGenVisitor::visitBool(BoolNode &node) {
-	auto index = buffer.emit("br label @");
+	auto index = emit_br(buffer, "@");
 	if (node.getVal()) node.true_list = CodeBuffer::makelist({index, BranchLabelIndex::FIRST});
 	else node.false_list = CodeBuffer::makelist({index, BranchLabelIndex::FIRST});
 }
@@ -226,14 +218,14 @@ void CodeGenVisitor::visitRelOp(RelOpNode &node) {
 	auto right_place = node.getRight()->place;
 	if (node.getLeft()->expr_type == Types::BYTE_T) {
 		left_place = buffer.newTemp();
-		buffer.emit("%" + left_place + " = zext i8 %" + node.getLeft()->place + " to i32");
+		emit_zext(buffer, left_place, "i8", "i32", node.getLeft()->place);
 	}
 	if (node.getRight()->expr_type == Types::BYTE_T) {
 		right_place = buffer.newTemp();
-		buffer.emit("%" + right_place + " = zext i8 %" + node.getRight()->place + " to i32");
+		emit_zext(buffer, right_place, "i8", "i32", node.getRight()->place);
 	}
-	buffer.emit("%" + tmp + " = icmp " + node.getLlvmOp() + " i32 %" + left_place + ", %" + right_place);
-	auto index = buffer.emit("br i1 %" + tmp + ", label @, label @");
+	emit_icmp(buffer, tmp, node.getLlvmOp(), "i32", "%" + left_place, "%" + right_place);
+	auto index = emit_br(buffer, tmp, "@", "@");
 	node.true_list = CodeBuffer::makelist({index, BranchLabelIndex::FIRST});
 	node.false_list = CodeBuffer::makelist({index, BranchLabelIndex::SECOND});
 }
@@ -248,7 +240,14 @@ void CodeGenVisitor::visitBoolExpr(BoolExprNode &node) {
 
 void CodeGenVisitor::visitFormals(FormalsNode &node) {
 	auto current_function = symbol_table.getAllFuncs().back();
-	std::string func_decl_str("define " + current_function.type.getLlvmType() + " @" + current_function.full_name + "(");
+	string func_name;
+	if (current_function.full_name == "main") {
+		func_name = "fanc_main";
+	} else {
+		func_name = current_function.full_name;
+	}
+	std::string func_decl_str(
+			"define " + current_function.type.getLlvmType() + " @" + func_name + "(");
 	auto formal_list_node = current_function.formals.getFormalDecls();
 	if (formal_list_node != nullptr) {
 		auto args = formal_list_node->getFormalDecls();
@@ -276,13 +275,13 @@ void CodeGenVisitor::visitFuncDecl(FuncDeclNode &node) {
 	auto func = symbol_table.getAllFuncs().back();
 	auto default_return = buffer.newTemp();
 	if (func.type.getType() != Types::VOID_T) {
-		buffer.emit("%" + default_return + " = add " + func.type.getLlvmType() + " 0, 0");
-		buffer.emit("ret " + func.type.getLlvmType() + " %" + default_return);
+		emit_op(buffer, "add", default_return, func.type.getLlvmType(), "0", "0");
+		emit_ret(buffer, default_return, func.type.getLlvmType());
 	} else {
 		if (func.name == "main") {
-			buffer.emit("call void @exit(i32 0)");
+			emit_call(buffer, "exit", "void", "i32 0");
 		}
-		buffer.emit("ret void");
+		emit_ret(buffer);
 	}
 	buffer.emitLabel("}");
 }
@@ -290,35 +289,36 @@ void CodeGenVisitor::visitFuncDecl(FuncDeclNode &node) {
 
 void CodeGenVisitor::visitCallStatement(CallStatementNode &node) {
 	auto func = symbol_table.getFuncSymbol(node.getId(), node.getArgs());
-	std::string call_str = "call " + func->type.getLlvmType() + " @" + func->full_name;
-	auto args = node.getArgs()->getExprs();
-	if (!args.empty()) {
+	auto args = node.getArgs();
+	string args_str;
+	if (args != nullptr && !args->getExprs().empty()) {
+		auto exprs = args->getExprs();
 		auto func_args = func->formals.getFormalDecls()->getFormalDecls();
-		std::vector<std::string> string_list(args.size());
-		auto getLabelFn = [&func_args, &args, this](int i) {
-			if (args[i]->expr_type == Types::BYTE_T && func_args[i]->getType()->getType() == Types::INT_T) {
+		std::vector<std::string> string_list(exprs.size());
+		auto getLabelFn = [&func_args, &exprs, this](int i) {
+			auto func_llvm_type = func_args[i]->getType()->getLlvmType();
+			if (exprs[i]->expr_type == Types::BYTE_T && func_args[i]->getType()->getType() == Types::INT_T) {
 				auto new_place = buffer.newTemp();
-				buffer.emit("%" + new_place + " = zext i8 %" + args[i]->place + " to i32");
-				return "i32 %" + new_place;
+				emit_zext(buffer, new_place, exprs[i]->getLlvmType(), func_llvm_type, exprs[i]->place);
+				return func_llvm_type + " %" + new_place;
 			}
-			return func_args[i]->getType()->getLlvmType() + " %" + args[i]->place;
+			return func_llvm_type + " %" + exprs[i]->place;
 		};
 		auto addCommaFn = [](const std::string &a, const std::string &b) {
 			if (a.empty()) { return b; } else { return a + ", " + b; }
 		};
-		auto range = vector<int>(args.size());
+		auto range = vector<int>(exprs.size());
 		std::iota(range.begin(), range.end(), 0);
 		std::transform(range.begin(), range.end(), string_list.begin(), getLabelFn);
-		auto args_str = std::accumulate(string_list.begin(), string_list.end(), std::string(), addCommaFn);
-		call_str += "(" + args_str + ")";
+		args_str = std::accumulate(string_list.begin(), string_list.end(), std::string(), addCommaFn);
 	}
-	buffer.emit(call_str);
+	emit_call(buffer, func->full_name, func->type.getLlvmType(), args_str);
 }
 
 void CodeGenVisitor::visitCallExpr(CallExprNode &node) {
 	auto func = symbol_table.getFuncSymbol(node.getId(), node.getArgs());
-	std::string call_str = "call " + func->type.getLlvmType() + " @" + func->full_name;
 	auto args_node = node.getArgs();
+	string args_str;
 	if (args_node && !args_node->getExprs().empty()) {
 		auto args = args_node->getExprs();
 		auto func_args = func->formals.getFormalDecls()->getFormalDecls();
@@ -326,7 +326,8 @@ void CodeGenVisitor::visitCallExpr(CallExprNode &node) {
 		auto getLabelFn = [&func_args, &args, this](int i) {
 			if (args[i]->expr_type == Types::BYTE_T && func_args[i]->getType()->getType() == Types::INT_T) {
 				auto new_place = buffer.newTemp();
-				buffer.emit("%" + new_place + " = zext i8 %" + args[i]->place + " to i32");
+				emit_zext(buffer, new_place, args[i]->getLlvmType(), func_args[i]->getType()->getLlvmType(),
+						  args[i]->place);
 				return "i32 %" + new_place;
 			}
 			return func_args[i]->getType()->getLlvmType() + " %" + args[i]->place;
@@ -337,15 +338,12 @@ void CodeGenVisitor::visitCallExpr(CallExprNode &node) {
 		auto range = vector<int>(args.size());
 		std::iota(range.begin(), range.end(), 0);
 		std::transform(range.begin(), range.end(), string_list.begin(), getLabelFn);
-		auto args_str = std::accumulate(string_list.begin(), string_list.end(), std::string(), addCommaFn);
-		call_str += "(" + args_str + ")";
-	} else {
-		call_str += "()";
+		args_str = std::accumulate(string_list.begin(), string_list.end(), std::string(), addCommaFn);
 	}
 	node.place = buffer.newTemp();
-	buffer.emit("%" + node.place + " = " + call_str);
+	emit_call(buffer, func->full_name, node.place, func->type.getLlvmType(), args_str);
 	if (node.expr_type == Types::BOOL_T) {
-		auto index = buffer.emit("br i1 %" + node.place + " , label @ , label @");
+		auto index = emit_br(buffer, node.place, "@", "@");
 		node.true_list = CodeBuffer::makelist({index, BranchLabelIndex::FIRST});
 		node.false_list = CodeBuffer::makelist({index, BranchLabelIndex::SECOND});
 	}
@@ -355,15 +353,13 @@ void CodeGenVisitor::visitCallExpr(CallExprNode &node) {
 void CodeGenVisitor::visitCast(CastNode &node) {
 	node.place = buffer.newTemp();
 	if (node.getType()->getType() == Types::INT_T) {
-		buffer.emit("%" + node.place + " = add i32 0, %" + node.getExpr()->place);
+		emit_zext(buffer, node.place, node.getExpr()->getLlvmType(), "i32", node.getExpr()->place);
 	} else if (node.getType()->getType() == Types::BYTE_T) {
 		auto tmp_place = buffer.newTemp();
-		buffer.emit("%" + tmp_place + " = add i32 0, %" + node.getExpr()->place);
-		buffer.emit("%" + node.place + " = trunc i32 %" + tmp_place + " to i8");
+		emit_trunc(buffer, node.place, "i32", "i8", node.getExpr()->place);
 	} else if (node.getType()->getType() == Types::BOOL_T) {
 		auto tmp_place = buffer.newTemp();
-		buffer.emit("%" + tmp_place + " = add i32 0, %" + node.getExpr()->place);
-		buffer.emit("%" + node.place + " = icmp ne i32 %" + tmp_place + ", 0");
+		emit_icmp(buffer, node.place, "ne", "i32", "%" + node.getExpr()->place, "0");
 	}
 }
 
@@ -373,28 +369,38 @@ void CodeGenVisitor::visitReturn(ReturnNode &node) {
 		if (expr->expr_type == Types::BOOL_T) {
 			expr->place = buffer.newTemp();
 			string true_label = buffer.genLabel();
-			buffer.emit("br label %label_" + to_string(buffer.labelCounter + 1) + "; true ");
+			emit_br(buffer, "%label_" + to_string(buffer.labelCounter + 1));
 			string false_label = buffer.genLabel();
-			buffer.emit("br label %label_" + to_string(buffer.labelCounter) + "; false ");
+			emit_br(buffer, "%label_" + to_string(buffer.labelCounter));
 			buffer.genLabel();
-			buffer.emit("%" + expr->place + " = phi i1 [1,%" + true_label + "], [0,%" + false_label + "]");
+			emit_phi(buffer, expr->place, "i1", "1", true_label, "0", false_label);
 			buffer.bpatch(expr->true_list, true_label);
 			buffer.bpatch(expr->false_list, false_label);
+		} else if (expr->expr_type == Types::BYTE_T && symbol_table.getCurrentRetType() == Types::INT_T) {
+			TypeNode type(Types::INT_T);
+			CastNode cast(&type, expr);
+			visitCast(cast);
+			expr->place = cast.place;
+		} else if (expr->expr_type == Types::INT_T && symbol_table.getCurrentRetType() == Types::BYTE_T) {
+			TypeNode type(Types::BYTE_T);
+			CastNode cast(&type, expr);
+			visitCast(cast);
+			expr->place = cast.place;
 		}
-		buffer.emit("ret " + node.getExpr()->getLlvmType() + " %" + node.getExpr()->place);
+		emit_ret(buffer, expr->place, type_to_string(symbol_table.getCurrentRetType()));
 	} else {
-		buffer.emit("ret void");
+		emit_ret(buffer);
 	}
 }
 
 
 void CodeGenVisitor::visitBreak(BreakNode &node) {
-	auto index = buffer.emit("br label @");
+	auto index = emit_br(buffer, "@");
 	context.addBreak(index);
 }
 
 void CodeGenVisitor::visitContinue(ContinueNode &node) {
-	auto index = buffer.emit("br label @");
+	auto index = emit_br(buffer, "@");
 	context.addContinue(index);
 }
 
@@ -404,16 +410,13 @@ void CodeGenVisitor::visitExprList(ExprListNode &node) {
 		if (expr->expr_type == Types::BOOL_T) {
 			expr->place = buffer.newTemp();
 			string true_label = buffer.genLabel();
-			buffer.emit("br label %label_" + to_string(buffer.labelCounter + 1) + "; true ");
+			emit_br(buffer, "%label_" + to_string(buffer.labelCounter + 1));
 			string false_label = buffer.genLabel();
-			buffer.emit("br label %label_" + to_string(buffer.labelCounter) + "; false ");
+			emit_br(buffer, "%label_" + to_string(buffer.labelCounter));
 			buffer.genLabel();
-			buffer.emit("%" + expr->place + " = phi i1 [1,%" + true_label + "], [0,%" + false_label + "]");
+			emit_phi(buffer, expr->place, "i1", "1", true_label, "0", false_label);
 			buffer.bpatch(expr->true_list, true_label);
 			buffer.bpatch(expr->false_list, false_label);
-		} else {
-			buffer.printCodeBuffer();
-			throw std::runtime_error("non-boolean expression without place");
 		}
 	}
 }

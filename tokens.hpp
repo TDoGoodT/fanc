@@ -17,11 +17,14 @@ enum Types {
 	BYTE_T,
 	BOOL_T,
 	STRING_T,
-    NOT_SET
+	NOT_SET
 };
 
+
+
 static bool types_match(Types from, Types to, bool explicit_cast = false) {
-	return (from == to) || (to == Types::INT_T && from == Types::BYTE_T) || (explicit_cast && from == Types::INT_T && to == Types::BYTE_T);
+	return (from == to) || (to == Types::INT_T && from == Types::BYTE_T) ||
+		   (explicit_cast && from == Types::INT_T && to == Types::BYTE_T);
 }
 
 #endif /* TOKENS_HPP_ */
